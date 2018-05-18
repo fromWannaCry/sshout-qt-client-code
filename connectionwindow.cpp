@@ -148,7 +148,7 @@ void ConnectionWindow::start_main_window() {
 	int index = ui->remote_host_comboBox->currentIndex();
 	if(index >= 0) config->setValue("LastServerIndex", index);
 	hide();
-	MainWindow *w = new MainWindow(NULL, host, port, identify_file);
+	MainWindow *w = new MainWindow(NULL, config, host, port, identify_file);
 	w->show();
 	accept();
 }

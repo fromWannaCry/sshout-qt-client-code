@@ -56,8 +56,10 @@ int main(int argc, char *argv[]) {
 	if(server_list.isEmpty()) {
 		w = new ConnectionWindow(NULL, &config);
 	} else if(config.value("AutoConnect", false).toBool()) {
-		int last_server_index = config.value("LastServerIndex", 0).toUInt();
-		//server_list[0].
+		int index = config.value("LastServerIndex", 0).toUInt();
+		if(index < 0 || index >= server_list.count()) index = 0;
+		const ServerInformation &info = server_list[index].value<ServerInformation>();
+		w = new MainWindow(NULL, &config, info.host, info.port, info.identify_file);
 	} else {
 		w = new ConnectionWindow(NULL, &config);
 	}
