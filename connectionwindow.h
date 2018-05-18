@@ -17,6 +17,8 @@
 
 #include <QtGui/QDialog>
 
+class QSettings;
+
 namespace Ui {
 class ConnectionWindow;
 }
@@ -26,14 +28,21 @@ class ConnectionWindow : public QDialog
 Q_OBJECT
 
 public:
-	explicit ConnectionWindow(QWidget *parent = 0);
+	explicit ConnectionWindow(QWidget *, QSettings *);
 	~ConnectionWindow();
 
 private:
 	Ui::ConnectionWindow *ui;
+	QSettings *config;
+
+protected:
+	void closeEvent(QCloseEvent *);
 
 private slots:
 	void browse_identity_file();
+	void change_settings();
+	void start_main_window();
+	void remote_host_name_change_event(QString);
 };
 
 #endif // CONNECTIONWINDOW_H

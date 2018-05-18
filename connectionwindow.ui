@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>279</width>
-    <height>124</height>
+    <width>287</width>
+    <height>153</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -101,6 +101,13 @@
     </layout>
    </item>
    <item>
+    <widget class="QCheckBox" name="checkBox_auto_connect">
+     <property name="text">
+      <string>&amp;Auto connect</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QPushButton" name="settings_pushButton">
@@ -127,7 +134,7 @@
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
    <receiver>ConnectionWindow</receiver>
-   <slot>close()</slot>
+   <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>182</x>
@@ -155,8 +162,59 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>settings_pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ConnectionWindow</receiver>
+   <slot>change_settings()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>49</x>
+     <y>96</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>139</x>
+     <y>61</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>ConnectionWindow</receiver>
+   <slot>start_main_window()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>188</x>
+     <y>126</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>143</x>
+     <y>76</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>remote_host_comboBox</sender>
+   <signal>editTextChanged(QString)</signal>
+   <receiver>ConnectionWindow</receiver>
+   <slot>remote_host_name_change_event(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>126</x>
+     <y>24</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>143</x>
+     <y>76</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>browse_identity_file()</slot>
+  <slot>change_settings()</slot>
+  <slot>start_main_window()</slot>
+  <slot>remote_host_name_change_event(QString)</slot>
  </slots>
 </ui>
