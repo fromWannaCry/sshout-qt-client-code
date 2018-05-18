@@ -28,6 +28,9 @@
          </property>
         </widget>
        </item>
+       <item row="1" column="0" colspan="3">
+        <widget class="QTextEdit" name="textEdit_known_hosts"/>
+       </item>
        <item row="2" column="0" colspan="2">
         <widget class="QCheckBox" name="checkBox_use_internal_ssh_library">
          <property name="text">
@@ -35,34 +38,41 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
+       <item row="3" column="0">
         <widget class="QLabel" name="label_ssh_program">
          <property name="text">
           <string>SSH program path</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="1" rowspan="2">
+       <item row="3" column="1">
         <widget class="QLineEdit" name="lineEdit_ssh_program"/>
        </item>
-       <item row="6" column="0">
+       <item row="3" column="2">
+        <widget class="QToolButton" name="browse_ssh_program_button">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
         <widget class="QLabel" name="label_ssh_args">
          <property name="text">
           <string>Addional option for SSH</string>
          </property>
         </widget>
        </item>
-       <item row="6" column="1" rowspan="2">
+       <item row="4" column="1" colspan="2">
         <widget class="QLineEdit" name="lineEdit_ssh_args"/>
        </item>
-       <item row="8" column="0" colspan="2">
+       <item row="5" column="0">
         <widget class="QLabel" name="label_environment">
          <property name="text">
           <string>Addional Environment:</string>
          </property>
         </widget>
        </item>
-       <item row="9" column="0" colspan="2">
+       <item row="6" column="0" colspan="3">
         <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
           <widget class="QTreeWidget" name="environment_list">
@@ -84,7 +94,7 @@
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <item>
-            <widget class="QPushButton" name="button_add_item">
+            <widget class="QPushButton" name="button_add_env_item">
              <property name="maximumSize">
               <size>
                <width>32</width>
@@ -110,7 +120,7 @@
             </spacer>
            </item>
            <item>
-            <widget class="QPushButton" name="button_remove_item">
+            <widget class="QPushButton" name="button_remove_env_item">
              <property name="maximumSize">
               <size>
                <width>32</width>
@@ -125,9 +135,6 @@
           </layout>
          </item>
         </layout>
-       </item>
-       <item row="1" column="0" colspan="2">
-        <widget class="QTextEdit" name="textEdit_known_hosts"/>
        </item>
       </layout>
      </widget>
@@ -204,7 +211,7 @@
    <sender>checkBox_use_internal_ssh_library</sender>
    <signal>toggled(bool)</signal>
    <receiver>SettingsDialog</receiver>
-   <slot>use_internet_ssh_library(bool)</slot>
+   <slot>use_internal_ssh_library_checked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>199</x>
@@ -216,8 +223,76 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>button_add_env_item</sender>
+   <signal>clicked()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>add_environment_variable()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>361</x>
+     <y>273</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>190</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_remove_env_item</sender>
+   <signal>clicked()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>remove_environment_variable()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>361</x>
+     <y>309</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>190</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>browse_ssh_program_button</sender>
+   <signal>clicked()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>browse_ssh_program()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>367</x>
+     <y>187</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>190</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SettingsDialog</sender>
+   <signal>accepted()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>save_settings()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>199</x>
+     <y>190</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>190</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
-  <slot>use_internet_ssh_library(bool)</slot>
+  <slot>use_internal_ssh_library_checked(bool)</slot>
+  <slot>add_environment_variable()</slot>
+  <slot>remove_environment_variable()</slot>
+  <slot>browse_ssh_program()</slot>
+  <slot>save_settings()</slot>
  </slots>
 </ui>

@@ -94,7 +94,7 @@ void ConnectionWindow::browse_identity_file() {
 }
 
 void ConnectionWindow::change_settings() {
-	SettingsDialog d(this);
+	SettingsDialog d(this, config);
 	d.exec();
 }
 
