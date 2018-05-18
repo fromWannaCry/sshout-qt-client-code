@@ -127,14 +127,22 @@ void ConnectionWindow::start_main_window() {
 		QMessageBox::critical(this, tr("Check Server Information"), tr("Identify file path cannot be empty"));
 		return;
 	}
-	ServerInformation info;
-	info.host = host;
-	info.port = port;
-	info.identify_file = identify_file;
-	QVariant v = QVariant::fromValue<ServerInformation>(info);
-	if(!server_list.contains(v)) {
+
+	bool found = false;
+	foreach(const QVariant &i, server_list) {
+		if(i.value<ServerInformation>().host == host) {
+			found = 1;
+			break;
+		}
+	}
+	if(!found) {
+		ServerInformation info;
+		info.host = host;
+		info.port = port;
+		info.identify_file = identify_file;
+		QVariant v = QVariant::fromValue<ServerInformation>(info);
 		server_list << v;
-		qDebug() << server_list.last().value<ServerInformation>().host;
+		//qDebug() << server_list.last().value<ServerInformation>().host;
 		config->setValue("ServerList", server_list);
 	}
 	int index = ui->remote_host_comboBox->currentIndex();
