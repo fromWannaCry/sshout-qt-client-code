@@ -14,10 +14,14 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         connectionwindow.cpp \
-    settingsdialog.cpp
+    settingsdialog.cpp \
+    mainwindow.cpp
 
 HEADERS  += connectionwindow.h \
-    settingsdialog.h
+    settingsdialog.h \
+    mainwindow.h \
+    serverinformation.h
 
 FORMS    += connectionwindow.ui \
-    settingsdialog.ui
+    settingsdialog.ui \
+    mainwindow.ui

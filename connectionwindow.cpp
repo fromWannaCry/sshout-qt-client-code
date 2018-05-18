@@ -14,7 +14,9 @@
 
 #include "connectionwindow.h"
 #include "ui_connectionwindow.h"
+#include "serverinformation.h"
 #include "settingsdialog.h"
+#include "mainwindow.h"
 #include <QtGui/QCompleter>
 #include <QtGui/QFileDialog>
 #include <QtCore/QFile>
@@ -22,6 +24,7 @@
 #include <QtCore/QSettings>
 #include <QtCore/QList>
 #include <QtGui/QMessageBox>
+#include <QtCore/QDebug>
 
 ConnectionWindow::ConnectionWindow(QWidget *parent, QSettings *config) :
 	QDialog(parent),
@@ -32,6 +35,7 @@ ConnectionWindow::ConnectionWindow(QWidget *parent, QSettings *config) :
 	completer->setCompletionMode(QCompleter::PopupCompletion);
 	ui->remote_host_comboBox->setCompleter(completer);
 	this->config = config;
+#if 0
 	QStringList server_list = config->value("ServerList").toStringList();
 	if(!server_list.isEmpty()) {
 		int index = config->value("LastServerIndex", 0).toInt();
@@ -48,6 +52,21 @@ ConnectionWindow::ConnectionWindow(QWidget *parent, QSettings *config) :
 			ui->identify_file_lineEdit->setText(id_list[index]);
 		}
 	}
+#else
+	server_list = config->value("ServerList").toList();
+	if(!server_list.isEmpty()) {
+		foreach(const QVariant &i, server_list) {
+			const QString &host = i.value<ServerInformation>().host;
+			ui->remote_host_comboBox->addItem(host);
+		}
+		int index = config->value("LastServerIndex", 0).toInt();
+		if(index < 0 || index >= server_list.count()) index = 0;
+		const ServerInformation &info = server_list[index].value<ServerInformation>();
+		ui->remote_host_comboBox->setCurrentIndex(index);
+		ui->remote_port_lineEdit->setText(QString::number(info.port));
+		ui->identify_file_lineEdit->setText(info.identify_file);
+	}
+#endif
 	remote_host_name_change_event(ui->remote_host_comboBox->currentText());
 }
 
@@ -90,14 +109,14 @@ void ConnectionWindow::start_main_window() {
 		QMessageBox::critical(this, tr("Check Server Information"), tr("Host name cannot be empty"));
 		return;
 	}
-	int port;
+	quint16 port;
 	const QString &port_str = ui->remote_port_lineEdit->text();
 	if(port_str.isEmpty()) {
 		port = 22;
 		ui->remote_port_lineEdit->setText("22");
 	} else {
 		bool ok;
-		port = port_str.toInt(&ok);
+		port = port_str.toUInt(&ok);
 		if(!ok) {
 			QMessageBox::critical(this, tr("Check Server Information"), tr("Invalid port number"));
 			return;
@@ -108,7 +127,22 @@ void ConnectionWindow::start_main_window() {
 		QMessageBox::critical(this, tr("Check Server Information"), tr("Identify file path cannot be empty"));
 		return;
 	}
-	// TODO: Create an instance of MainWindow, and accept()
+	ServerInformation info;
+	info.host = host;
+	info.port = port;
+	info.identify_file = identify_file;
+	QVariant v = QVariant::fromValue<ServerInformation>(info);
+	if(!server_list.contains(v)) {
+		server_list << v;
+		qDebug() << server_list.last().value<ServerInformation>().host;
+		config->setValue("ServerList", server_list);
+	}
+	int index = ui->remote_host_comboBox->currentIndex();
+	if(index >= 0) config->setValue("LastServerIndex", index);
+	hide();
+	MainWindow *w = new MainWindow(NULL, host, port, identify_file);
+	w->show();
+	accept();
 }
 
 void ConnectionWindow::remote_host_name_change_event(QString host_name) {

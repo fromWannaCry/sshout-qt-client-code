@@ -34,6 +34,13 @@ public:
 private:
 	Ui::ConnectionWindow *ui;
 	QSettings *config;
+#if 0
+	QStringList *host_list;
+	QList<QVariant> *port_list;
+	QStringList *identify_list;
+#else
+	QList<QVariant> server_list;
+#endif
 
 protected:
 	void closeEvent(QCloseEvent *);
