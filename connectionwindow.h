@@ -23,14 +23,17 @@ class ConnectionWindow;
 
 class ConnectionWindow : public QDialog
 {
-		Q_OBJECT
-		
-	public:
-		explicit ConnectionWindow(QWidget *parent = 0);
-		~ConnectionWindow();
-		
-	private:
-		Ui::ConnectionWindow *ui;
+Q_OBJECT
+
+public:
+	explicit ConnectionWindow(QWidget *parent = 0);
+	~ConnectionWindow();
+
+private:
+	Ui::ConnectionWindow *ui;
+
+private slots:
+	void browse_identity_file();
 };
 
 #endif // CONNECTIONWINDOW_H

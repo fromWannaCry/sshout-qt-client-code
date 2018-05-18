@@ -13,10 +13,33 @@
  */
 
 #include "connectionwindow.h"
+#include <sys/stat.h>
 #include <QtGui/QApplication>
 #include <QtCore/QSettings>
+//#include <QtCore/QTextCodec>
+#include <QtCore/QFile>
+#include <QtCore/QDir>
 
+#define CONFIG_FILE_NAME "sshout.cfg"
+
+QString config_dir() {
+	QString appath = QApplication::applicationDirPath();
+#ifndef Q_OS_WINCE
+	if(QFile::exists(appath + "/" CONFIG_FILE_NAME)) {
+#endif
+		return appath;
+#ifndef Q_OS_WINCE
+	}
+	QString in_home = QDir::homePath() + "/.sshout";
+	if(!QFile::exists(in_home)) mkdir(in_home.toLocal8Bit().data(), 0750);
+	return in_home;
+#endif
+}
 int main(int argc, char *argv[]) {
+	QSettings config(config_dir() + "/" CONFIG_FILE_NAME, (QSettings::Format)1);
+	config.setIniCodec("UTF-8");
+	QString style = config.value("Style").toString();
+	if(!style.isEmpty()) QApplication::setStyle(style);
 	QApplication a(argc, argv);
 	ConnectionWindow w;
 	w.show();

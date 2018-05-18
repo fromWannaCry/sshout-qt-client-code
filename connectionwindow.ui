@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>279</width>
-    <height>121</height>
+    <height>124</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,20 +25,78 @@
      </item>
      <item row="0" column="1">
       <widget class="QComboBox" name="remote_host_comboBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="editable">
         <bool>true</bool>
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="0" column="3">
+      <widget class="QLineEdit" name="remote_port_lineEdit">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>48</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string notr="true">22</string>
+       </property>
+       <property name="maxLength">
+        <number>5</number>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
       <widget class="QLabel" name="remote_port_label">
        <property name="text">
         <string>Port</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QLineEdit" name="remote_port_lineEdit"/>
+     <item row="1" column="0">
+      <widget class="QLabel" name="identify_label">
+       <property name="text">
+        <string>Identify</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1" colspan="3">
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QLineEdit" name="identify_file_lineEdit"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="browse_identify_pushButton">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>32</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string notr="true">...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>
@@ -81,5 +139,24 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>browse_identify_pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>ConnectionWindow</receiver>
+   <slot>browse_identity_file()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>251</x>
+     <y>57</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>139</x>
+     <y>61</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
+ <slots>
+  <slot>browse_identity_file()</slot>
+ </slots>
 </ui>

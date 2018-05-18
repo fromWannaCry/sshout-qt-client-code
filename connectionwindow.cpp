@@ -15,6 +15,9 @@
 #include "connectionwindow.h"
 #include "ui_connectionwindow.h"
 #include <QtGui/QCompleter>
+#include <QtGui/QFileDialog>
+#include <QtCore/QFile>
+#include <QtCore/QDir>
 
 ConnectionWindow::ConnectionWindow(QWidget *parent) :
 	QDialog(parent),
@@ -29,4 +32,22 @@ ConnectionWindow::ConnectionWindow(QWidget *parent) :
 ConnectionWindow::~ConnectionWindow()
 {
 	delete ui;
+}
+
+static QString ssh_config_dir() {
+#ifdef Q_OS_WINCE
+	return QApplication::applicationDirPath();
+#else
+	return QDir::homePath() + "/.ssh";
+#endif
+}
+
+void ConnectionWindow::browse_identity_file() {
+	QFileDialog d(this, tr("Choose the identity"), ssh_config_dir());
+	d.setAcceptMode(QFileDialog::AcceptOpen);
+	d.setFileMode(QFileDialog::ExistingFile);
+	d.setOption(QFileDialog::DontUseNativeDialog);
+	if(d.exec()) {
+		ui->identify_file_lineEdit->setText(d.selectedFiles()[0]);
+	}
 }
