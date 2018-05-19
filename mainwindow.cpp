@@ -70,14 +70,17 @@ MainWindow::~MainWindow()
 void MainWindow::keyPressEvent(QKeyEvent *e) {
 	qDebug("function: MainWindow::keyPressEvent(%p)", e);
 	if(focusWidget() == ui->textEdit_message_to_send) {
+		bool show_tip = true;
 		int key = e->key();
 		qDebug("key = 0x%x", key);
 		switch(key) {
 			case Qt::Key_Control:
+				show_tip = false;
 				control_key_pressed = true;
 				break;
 			case Qt::Key_Enter:
 			case Qt::Key_Return:
+				show_tip = false;
 				if(send_message_on_enter) {
 					if(control_key_pressed) ui->textEdit_message_to_send->insertPlainText("\n");
 					else send_message();
@@ -87,7 +90,11 @@ void MainWindow::keyPressEvent(QKeyEvent *e) {
 					ignore_key_event = true;
 				}
 				break;
+			case Qt::Key_Backspace:
+				show_tip = false;
+				break;
 		}
+		if(show_tip) ui->statusbar->showMessage(tr("Press %1 to send").arg(send_message_on_enter ? tr("Enter") : tr("Ctrl-Enter")), 2000);
 	}
 }
 
@@ -122,6 +129,8 @@ void MainWindow::send_hello() {
 
 void MainWindow::send_message() {
 	qDebug("slot: MainWindow::send_message()");
+	QString message = ui->textEdit_message_to_send->toPlainText();
+	if(message.isEmpty()) return;
 	ui->textEdit_message_to_send->clear();
 }
 
