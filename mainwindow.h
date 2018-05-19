@@ -38,9 +38,22 @@ protected:
 	void closeEvent(QCloseEvent *);
 
 private:
+	struct UserInfo {
+		int id;
+		QString user_name;
+		QString host_name;
+	};
+	struct UserIdAndHostName {
+		int id;
+		QString host_name;
+	};
 	void print_message(const QString &, const QString &, quint8, const QByteArray &);
 	void send_hello();
 	void save_ui_layout();
+	void add_user_item(const QString &, QList<UserIdAndHostName> *);
+	void remove_offline_user_items(const QSet<QString> &);
+	void update_user_list(const UserInfo *, unsigned int);
+	void send_request_online_users();
 	Ui::MainWindow *ui;
 	bool use_internal_ssh_library;
 	SSHClient *ssh_client;

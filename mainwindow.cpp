@@ -29,6 +29,7 @@
 //#include <QtCore/QDateTime>
 #include <QtCore/QTime>
 #include <QtGui/QKeyEvent>
+#include <QtGui/QListWidgetItem>
 //#include <QtGui/QRubberBand>
 #include <stdio.h>
 #include <QtCore/QDebug>
@@ -74,6 +75,7 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 		QVariant v = config->value("WindowSize");
 		if(!v.isNull()) resize(v.toSize());
 	}
+	ui->textEdit_message_to_send->setFocus();
 	data_stream = new QDataStream(ssh_client);
 	//data_stream->setByteOrder(QDataStream::BigEndian);
 	connect_ssh();
@@ -209,6 +211,51 @@ void MainWindow::send_message() {
 	ui->statusbar->showMessage(tr("Sending message"), 1000);
 }
 
+void MainWindow::add_user_item(const QString &user_name, QList<UserIdAndHostName> *logins) {
+	QListWidgetItem *item;
+	QList<QListWidgetItem *> orig_items = ui->listWidget_online_users->findItems(user_name, Qt::MatchFixedString | Qt::MatchCaseSensitive);
+	int exists = orig_items.length();
+	if(exists) {
+		Q_ASSERT(exists == 1);
+		item = orig_items[0];
+	} else {
+		item = new QListWidgetItem(user_name);
+		item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+	}
+	item->setData((int)Qt::UserRole, QVariant::fromValue((void *)logins));
+	if(!exists) ui->listWidget_online_users->addItem(item);
+}
+
+void MainWindow::remove_offline_user_items(const QSet<QString> &keep_set) {
+	QList<QListWidgetItem *> items = ui->listWidget_online_users->findItems("*", Qt::MatchWildcard);
+	//qDebug() << items;
+	foreach(QListWidgetItem *i, items) {
+		if(keep_set.contains(i->text())) continue;
+		delete i;
+	}
+}
+
+void MainWindow::update_user_list(const UserInfo *users, unsigned int count) {
+	QSet<QString> user_set;
+	QHash<QString, QList<UserIdAndHostName> > user_logins;
+	for(unsigned int i=0; i<count; i++) {
+		const UserInfo *p = users + i;
+		user_set << p->user_name;
+		user_logins[p->user_name] << (UserIdAndHostName){ p->id, p->host_name };
+	}
+	remove_offline_user_items(user_set);
+	foreach(const QString &user, user_set) {
+		add_user_item(user, new QList<UserIdAndHostName>(user_logins[user]));
+	}
+}
+
+void MainWindow::send_request_online_users() {
+	quint32 length = 1;
+	quint8 type = SSHOUT_API_GET_ONLINE_USER;
+	*data_stream << length;
+	*data_stream << type;
+}
+
 void MainWindow::ssh_state_change(SSHClient::SSHState state) {
 	qDebug("slot: MainWindow::on_ssh_state_change(%d)", state);
 	switch(state) {
@@ -260,7 +307,35 @@ void MainWindow::read_ssh() {
 					ssh_client->disconnect();
 					return;
 				}
+				send_request_online_users();
 				break;
+			case SSHOUT_API_ONLINE_USERS_INFO:
+				qDebug("SSHOUT_API_ONLINE_USERS_INFO received");
+				{
+					quint16 my_id;
+					stream >> my_id;
+					quint16 count;
+					stream >> count;
+					UserInfo users[count];
+					unsigned int i = 0;
+					//while(count-- > 0) {
+					while(i < count) {
+						quint16 id;
+						quint8 user_name_len, host_name_len;
+						stream >> id;
+						stream >> user_name_len;
+						char user_name[user_name_len];
+						stream.readRawData(user_name, user_name_len);
+						stream >> host_name_len;
+						char host_name[host_name_len];
+						stream.readRawData(host_name, host_name_len);
+						UserInfo *p = users + i++;
+						p->id = id;
+						p->user_name = QString::fromUtf8(user_name, user_name_len);
+						p->host_name = QString::fromUtf8(host_name, host_name_len);
+					}
+					update_user_list(users, count);
+				}
 			case SSHOUT_API_MOTD:
 				qDebug("SSHOUT_API_MOTD received");
 				quint32 length;
