@@ -12,6 +12,7 @@
  * more details.
  */
 
+#include "common.h"
 #include "settingsdialog.h"
 #include "ui_settingsdialog.h"
 #include <QtCore/QSettings>
@@ -39,7 +40,7 @@ SettingsDialog::SettingsDialog(QWidget *parent, QSettings *config) :
 	}
 
 	ui->textEdit_known_hosts->setPlainText(config->value("KnownHosts").toString());
-	ui->lineEdit_ssh_program->setText(config->value("SSHProgramPath", "/usr/bin/ssh").toString());
+	ui->lineEdit_ssh_program->setText(config->value("SSHProgramPath", DEFAULT_SSH_PROGRAM_PATH).toString());
 	ui->lineEdit_ssh_args->setText(config->value("SSHArgs").toString());
 
 	config->beginGroup("SSHEnvironment");

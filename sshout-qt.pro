@@ -15,12 +15,17 @@ TEMPLATE = app
 SOURCES += main.cpp\
         connectionwindow.cpp \
     settingsdialog.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    sshclient.cpp \
+    externalsshclient.cpp
 
 HEADERS  += connectionwindow.h \
     settingsdialog.h \
     mainwindow.h \
-    serverinformation.h
+    serverinformation.h \
+    sshclient.h \
+    externalsshclient.h \
+    common.h
 
 FORMS    += connectionwindow.ui \
     settingsdialog.ui \
