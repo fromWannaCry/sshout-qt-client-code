@@ -26,11 +26,19 @@ public:
 	ExternalSSHClient(QObject *, const QString &);
 	void set_ssh_program_path(const QString &);
 	bool connect(const QString &, quint16, const QString &, const QString & = QString());
+	void disconnect();
 	void set_identify_file(const QString &);
 	void setenv(const QString &, const QString &);
 	void unsetenv(const QString &);
 	void set_reconnect_interval(int);
+	bool atEnd() const;
 	qint64 bytesAvailable() const;
+	qint64 bytesToWrite() const;
+	bool canReadLine() const;
+	bool isSequential() const;
+	bool waitForBytesWritten(int msecs);
+	bool waitForReadyRead(int msecs);
+	void register_ready_read_stderr_slot(const char *, Qt::ConnectionType = Qt::AutoConnection);
 
 protected:
 	qint64 readData(char *, qint64);
@@ -38,6 +46,9 @@ protected:
 
 signals:
 	void state_changed(SSHState);
+	void connected();
+	void disconnected(int);
+	void readyRead();
 
 private:
 	SSHState ssh_state;
@@ -51,6 +62,9 @@ private:
 private slots:
 	void reconnect();
 	void from_process_state_change(QProcess::ProcessState);
+	void from_process_started();
+	void from_process_finished(int);
+	void from_process_ready_read();
 };
 
 #endif // EXTERNALSSHCLIENT_H

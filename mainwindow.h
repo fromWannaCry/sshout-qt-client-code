@@ -16,9 +16,9 @@
 #define MAINWINDOW_H
 
 #include <QtGui/QMainWindow>
+#include "sshclient.h"
 
 class QSettings;
-class SSHClient;
 
 namespace Ui {
 class MainWindow;
@@ -36,9 +36,16 @@ protected:
 	bool eventFilter(QObject *, QEvent *);
 
 private:
+	void send_hello();
 	Ui::MainWindow *ui;
 	bool use_internal_ssh_library;
 	SSHClient *ssh_client;
+	QString host;
+	quint16 port;
+
+private slots:
+	void connect_ssh();
+	void on_ssh_state_change(SSHClient::SSHState);
 };
 
 #endif // MAINWINDOW_H

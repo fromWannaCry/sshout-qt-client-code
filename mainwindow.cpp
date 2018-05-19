@@ -20,7 +20,8 @@
 #endif
 #include "externalsshclient.h"
 #include <QtCore/QSettings>
-#include <QtGui/QRubberBand>
+#include <QtCore/QTimer>
+//#include <QtGui/QRubberBand>
 
 MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, quint16 port, const QString &identify_file) :
 	QMainWindow(parent),
@@ -34,6 +35,8 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	else
 #endif
 	ssh_client = new ExternalSSHClient(this, config->value("SSHProgramPath", DEFAULT_SSH_PROGRAM_PATH).toString());
+	ssh_client->set_identify_file(identify_file);
+	connect_ssh();
 }
 
 MainWindow::~MainWindow()
@@ -44,4 +47,31 @@ MainWindow::~MainWindow()
 bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 	qDebug("function: MainWindow::eventFilter(%p, %p)", o, e);
 	return true;
+}
+
+void MainWindow::connect_ssh() {
+	ssh_client->connect(host, port, DEFAULT_SSH_USER_NAME, "api");
+}
+
+void MainWindow::send_hello() {
+
+}
+
+void MainWindow::on_ssh_state_change(SSHClient::SSHState state) {
+	switch(state) {
+		case SSHClient::DISCONNECTED:
+			ui->statusbar->showMessage(tr("Disconnected"));
+			QTimer::singleShot(10000, this, SLOT(connect_ssh()));
+			break;
+		case SSHClient::CONNECTIING:
+			if(use_internal_ssh_library) ui->statusbar->showMessage(tr("Connecting"));
+			break;
+		case SSHClient::AUTHENTICATING:
+			if(use_internal_ssh_library) ui->statusbar->showMessage(tr("Authenticating"));
+			break;
+		case SSHClient::AUTHENTICATED:
+			ui->statusbar->showMessage(tr("Connected"));
+			send_hello();
+			break;
+	}
 }

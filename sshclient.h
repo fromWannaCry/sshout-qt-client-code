@@ -20,6 +20,9 @@ public:
 
 signals:
 	void state_change(SSHState);
+	void connected();
+	void disconnected(int);
+	void readyRead();
 };
 
 #endif // SSHCLIENT_H
