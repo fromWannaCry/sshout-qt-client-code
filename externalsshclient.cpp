@@ -55,6 +55,7 @@ bool ExternalSSHClient::connect(const QString &host, quint16 port, const QString
 }
 
 void ExternalSSHClient::disconnect() {
+	qDebug("function: ExternalSSHClient::disconnect()");
 	ssh_process->terminate();
 	ssh_process->close();
 }

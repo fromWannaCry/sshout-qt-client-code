@@ -20,6 +20,7 @@
 #endif
 #include "externalsshclient.h"
 #include "settingsdialog.h"
+#include "connectionwindow.h"
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>
 #include <QtGui/QKeyEvent>
@@ -58,6 +59,14 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	ui->textEdit_message_to_send->installEventFilter(this);
 	control_key_pressed = false;
 	ignore_key_event = false;
+	bool show_user_list = config->value("ShowUserList", true).toBool();
+	ui->dockWidget_online_list->setVisible(show_user_list);
+	ui->action_show_online_users->setChecked(show_user_list);
+	if(config->value("WindowMaximized", false).toBool()) showMaximized();
+	else {
+		QVariant v = config->value("WindowSize");
+		if(!v.isNull()) resize(v.toSize());
+	}
 	connect_ssh();
 }
 
@@ -115,6 +124,18 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 	if(!ignore_key_event) return false;
 	ignore_key_event = false;
 	return true;
+}
+
+void MainWindow::save_ui_layout() {
+	config->setValue("ShowUserList", ui->dockWidget_online_list->isVisible());
+	if(isMaximized()) config->setValue("WindowMaximized", true);
+	else config->setValue("WindowSize", size());
+}
+
+void MainWindow::closeEvent(QCloseEvent *e) {
+	ssh_client->disconnect();
+	save_ui_layout();
+	e->accept();
 }
 
 void MainWindow::connect_ssh() {
@@ -181,4 +202,10 @@ void MainWindow::set_send_message_on_enter(bool v) {
 void MainWindow::settings() {
 	SettingsDialog d(this, config);
 	d.exec();
+}
+
+void MainWindow::change_server() {
+	ConnectionWindow *w = new ConnectionWindow(NULL, config);
+	w->show();
+	close();
 }

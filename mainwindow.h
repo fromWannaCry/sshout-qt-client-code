@@ -35,9 +35,11 @@ protected:
 	void keyPressEvent(QKeyEvent *);
 	void keyReleaseEvent(QKeyEvent *);
 	bool eventFilter(QObject *, QEvent *);
+	void closeEvent(QCloseEvent *);
 
 private:
 	void send_hello();
+	void save_ui_layout();
 	Ui::MainWindow *ui;
 	bool use_internal_ssh_library;
 	SSHClient *ssh_client;
@@ -59,6 +61,7 @@ private slots:
 	void set_send_message_on_enter(bool);
 	void settings();
 	void send_message();
+	void change_server();
 };
 
 #endif // MAINWINDOW_H
