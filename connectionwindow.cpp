@@ -130,8 +130,10 @@ void ConnectionWindow::start_main_window() {
 
 	bool found = false;
 	foreach(const QVariant &i, server_list) {
-		if(i.value<ServerInformation>().host == host) {
-			found = 1;
+		ServerInformation info = i.value<ServerInformation>();
+		if(info.host == host) {
+			if(info.port == port && info.identify_file == identify_file) found = 1;
+			else server_list.removeOne(i);
 			break;
 		}
 	}
@@ -151,6 +153,14 @@ void ConnectionWindow::start_main_window() {
 	MainWindow *w = new MainWindow(NULL, config, host, port, identify_file);
 	w->show();
 	accept();
+}
+
+void ConnectionWindow::remote_host_name_change_event(int index) {
+	if(index < 0 || index > server_list.count()) return;
+	ServerInformation info = server_list[index].value<ServerInformation>();
+	if(ui->remote_host_comboBox->currentText() != info.host) return;
+	ui->remote_port_lineEdit->setText(QString::number(info.port));
+	ui->identify_file_lineEdit->setText(info.identify_file);
 }
 
 void ConnectionWindow::remote_host_name_change_event(QString host_name) {

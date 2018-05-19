@@ -19,7 +19,7 @@ public:
 	virtual void set_reconnect_interval(int) = 0;
 
 signals:
-	void state_change(SSHState);
+	void state_changed(SSHClient::SSHState);
 	void connected();
 	void disconnected(int);
 	void readyRead();

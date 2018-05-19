@@ -49,6 +49,7 @@ private slots:
 	void browse_identity_file();
 	void change_settings();
 	void start_main_window();
+	void remote_host_name_change_event(int);
 	void remote_host_name_change_event(QString);
 };
 

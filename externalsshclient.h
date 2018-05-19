@@ -25,6 +25,7 @@ public:
 	ExternalSSHClient(QObject * = NULL);
 	ExternalSSHClient(QObject *, const QString &);
 	void set_ssh_program_path(const QString &);
+	void set_extra_args(const QStringList &);
 	bool connect(const QString &, quint16, const QString &, const QString & = QString());
 	void disconnect();
 	void set_identify_file(const QString &);
@@ -38,22 +39,28 @@ public:
 	bool isSequential() const;
 	bool waitForBytesWritten(int msecs);
 	bool waitForReadyRead(int msecs);
-	void register_ready_read_stderr_slot(const char *, Qt::ConnectionType = Qt::AutoConnection);
+	void register_ready_read_stderr_slot(QObject *, const char *, Qt::ConnectionType = Qt::AutoConnection);
+	bool can_read_line_from_stderr();
+	qint64 read_line_from_stderr(char *, qint64);
+	QByteArray read_line_from_stderr(qint64 = 0);
 
 protected:
 	qint64 readData(char *, qint64);
 	qint64 writeData(const char *, qint64);
 
+/*
 signals:
-	void state_changed(SSHState);
+	void state_changed(SSHClient::SSHState);
 	void connected();
 	void disconnected(int);
 	void readyRead();
+*/
 
 private:
 	SSHState ssh_state;
 	QString ssh_program_path;
 	QStringList ssh_args;
+	QStringList ssh_args_extra;
 	QProcess *ssh_process;
 	QString identify_file;
 	QSet<QString> environment;

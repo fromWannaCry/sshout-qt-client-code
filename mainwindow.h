@@ -45,7 +45,12 @@ private:
 
 private slots:
 	void connect_ssh();
-	void on_ssh_state_change(SSHClient::SSHState);
+	//void on_ssh_state_change(SSHClient::SSHState);
+	void ssh_state_change(SSHClient::SSHState);
+	//void on_ssh_ready_read();
+	//void on_ssh_ready_read_stderr();
+	void read_ssh();
+	void read_ssh_stderr();
 };
 
 #endif // MAINWINDOW_H

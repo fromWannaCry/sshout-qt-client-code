@@ -216,11 +216,28 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>remote_host_comboBox</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>ConnectionWindow</receiver>
+   <slot>remote_host_name_change_event(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>126</x>
+     <y>23</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>143</x>
+     <y>76</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>browse_identity_file()</slot>
   <slot>change_settings()</slot>
   <slot>start_main_window()</slot>
   <slot>remote_host_name_change_event(QString)</slot>
+  <slot>remote_host_name_change_event(int)</slot>
  </slots>
 </ui>

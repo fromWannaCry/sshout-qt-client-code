@@ -22,6 +22,7 @@
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>
 //#include <QtGui/QRubberBand>
+#include <stdio.h>
 
 MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, quint16 port, const QString &identify_file) :
 	QMainWindow(parent),
@@ -35,7 +36,19 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	else
 #endif
 	ssh_client = new ExternalSSHClient(this, config->value("SSHProgramPath", DEFAULT_SSH_PROGRAM_PATH).toString());
+#ifndef HAVE_OPENSSH_LIBRARY
+	use_internal_ssh_library = false;
+#endif
 	ssh_client->set_identify_file(identify_file);
+	this->host = host;
+	this->port = port;
+	connect(ssh_client, SIGNAL(state_changed(SSHClient::SSHState)), SLOT(ssh_state_change(SSHClient::SSHState)));
+	if(!use_internal_ssh_library) {
+		ExternalSSHClient *extern_ssh_client = (ExternalSSHClient *)ssh_client;
+		extern_ssh_client->register_ready_read_stderr_slot(this, SLOT(read_ssh_stderr()));
+		QStringList args = config->value("SSHArgs").toStringList();
+		if(!args.isEmpty()) extern_ssh_client->set_extra_args(args);
+	}
 	connect_ssh();
 }
 
@@ -50,14 +63,17 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 }
 
 void MainWindow::connect_ssh() {
-	ssh_client->connect(host, port, DEFAULT_SSH_USER_NAME, "api");
+	if(!ssh_client->connect(host, port, DEFAULT_SSH_USER_NAME, "api")) {
+		ui->statusbar->showMessage(tr("Cannot connect"), 10000);
+	}
 }
 
 void MainWindow::send_hello() {
 
 }
 
-void MainWindow::on_ssh_state_change(SSHClient::SSHState state) {
+void MainWindow::ssh_state_change(SSHClient::SSHState state) {
+	qDebug("slot: MainWindow::on_ssh_state_change(%d)", state);
 	switch(state) {
 		case SSHClient::DISCONNECTED:
 			ui->statusbar->showMessage(tr("Disconnected"));
@@ -73,5 +89,23 @@ void MainWindow::on_ssh_state_change(SSHClient::SSHState state) {
 			ui->statusbar->showMessage(tr("Connected"));
 			send_hello();
 			break;
+	}
+}
+
+void MainWindow::read_ssh() {
+	qDebug("slot: MainWindow::read_ssh()");
+}
+
+void MainWindow::read_ssh_stderr() {
+	qDebug("slot: MainWindow::read_ssh_stderr()");
+	if(use_internal_ssh_library) return;
+	ExternalSSHClient *extern_ssh_client = (ExternalSSHClient *)ssh_client;
+	while(extern_ssh_client->can_read_line_from_stderr()) {
+		QByteArray data = extern_ssh_client->read_line_from_stderr();
+		int len = data.count();
+		if(!len) return;
+		fputs(data.data(), stderr);
+		if(data[len - 1] == '\n') data.resize(len - 1);
+		ui->statusbar->showMessage(QString::fromLocal8Bit(data), 10000);
 	}
 }

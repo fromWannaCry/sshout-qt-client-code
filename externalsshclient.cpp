@@ -22,13 +22,18 @@ ExternalSSHClient::ExternalSSHClient(QObject *parent, const QString &ssh_program
 	this->ssh_program_path = ssh_program_path;
 	ssh_process = new QProcess(this);
 	environment = ssh_process->systemEnvironment().toSet();
+	QObject::connect(ssh_process, SIGNAL(stateChanged(QProcess::ProcessState)), SLOT(from_process_state_change(QProcess::ProcessState)));
 	QObject::connect(ssh_process, SIGNAL(started()), SLOT(from_process_started()));
-	QObject::connect(ssh_process, SIGNAL(finished(int)), SLOT(from_process_finished()));
+	QObject::connect(ssh_process, SIGNAL(finished(int)), SLOT(from_process_finished(int)));
 	QObject::connect(ssh_process, SIGNAL(readyReadStandardOutput()), SLOT(from_process_ready_read()));
 }
 
 void ExternalSSHClient::set_ssh_program_path(const QString &path) {
 	ssh_program_path = path;
+}
+
+void ExternalSSHClient::set_extra_args(const QStringList &args) {
+	ssh_args_extra = args;
 }
 
 bool ExternalSSHClient::connect(const QString &host, quint16 port, const QString &user, const QString &command) {
@@ -42,6 +47,7 @@ bool ExternalSSHClient::connect(const QString &host, quint16 port, const QString
 	ssh_args << "-l" << user;
 	if(!identify_file.isEmpty()) ssh_args << "-i" << identify_file;
 	ssh_args << "-T";
+	if(!ssh_args_extra.isEmpty()) ssh_args << ssh_args_extra;
 	if(!command.isEmpty()) ssh_args << command;
 	ssh_process->start(ssh_program_path, ssh_args);
 	//ssh_process->waitForStarted();
@@ -95,8 +101,30 @@ bool ExternalSSHClient::isSequential() const {
 	return true;
 }
 
-void ExternalSSHClient::register_ready_read_stderr_slot(const char *slot, Qt::ConnectionType type) {
-	QObject::connect(ssh_process, SIGNAL(readyReadStandardError()), slot, type);
+void ExternalSSHClient::register_ready_read_stderr_slot(QObject *receiver, const char *slot, Qt::ConnectionType type) {
+	qDebug("function: ExternalSSHClient::register_ready_read_stderr_slot(%p, %p<%s>, %d)", receiver, slot, slot, type);
+	QObject::connect(ssh_process, SIGNAL(readyReadStandardError()), receiver, slot, type);
+}
+
+bool ExternalSSHClient::can_read_line_from_stderr() {
+	ssh_process->setReadChannel(QProcess::StandardError);
+	bool r = ssh_process->canReadLine();
+	ssh_process->setReadChannel(QProcess::StandardOutput);
+	return r;
+}
+
+qint64 ExternalSSHClient::read_line_from_stderr(char *buffer, qint64 max_len) {
+	ssh_process->setReadChannel(QProcess::StandardError);
+	qint64 r = ssh_process->readLine(buffer, max_len);
+	ssh_process->setReadChannel(QProcess::StandardOutput);
+	return r;
+}
+
+QByteArray ExternalSSHClient::read_line_from_stderr(qint64 max_len) {
+	ssh_process->setReadChannel(QProcess::StandardError);
+	QByteArray r = ssh_process->readLine(max_len);
+	ssh_process->setReadChannel(QProcess::StandardOutput);
+	return r;
 }
 
 bool ExternalSSHClient::waitForBytesWritten(int msecs) {
@@ -116,6 +144,7 @@ qint64 ExternalSSHClient::writeData(const char *data, qint64 len) {
 }
 
 void ExternalSSHClient::from_process_state_change(QProcess::ProcessState proc_state) {
+	qDebug("slot: ExternalSSHClient::from_process_state_change(%d)", proc_state);
 	switch(proc_state) {
 		case QProcess::NotRunning:
 			ssh_state = DISCONNECTED;
@@ -125,9 +154,10 @@ void ExternalSSHClient::from_process_state_change(QProcess::ProcessState proc_st
 			break;
 		case QProcess::Running:
 			//ssh_state = AUTHENTICATING;
+			//break;
 			emit state_changed(AUTHENTICATING);
 			emit state_changed(AUTHENTICATED);
-			break;
+			return;
 	}
 	emit state_changed(ssh_state);
 	if(proc_state == QProcess::NotRunning && reconnect_interval >= 0) {
