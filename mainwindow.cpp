@@ -46,8 +46,8 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	if(!use_internal_ssh_library) {
 		ExternalSSHClient *extern_ssh_client = (ExternalSSHClient *)ssh_client;
 		extern_ssh_client->register_ready_read_stderr_slot(this, SLOT(read_ssh_stderr()));
-		QStringList args = config->value("SSHArgs").toStringList();
-		if(!args.isEmpty()) extern_ssh_client->set_extra_args(args);
+		QString args = config->value("SSHArgs").toString();
+		if(!args.isEmpty()) extern_ssh_client->set_extra_args(args.split(' '));
 	}
 	connect_ssh();
 }
