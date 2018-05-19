@@ -23,7 +23,7 @@ signals:
 	void state_changed(SSHClient::SSHState);
 	void connected();
 	void disconnected(int);
-	void readyRead();
+	//void readyRead();
 };
 
 #endif // SSHCLIENT_H

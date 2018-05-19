@@ -21,8 +21,13 @@
 #include "externalsshclient.h"
 #include "settingsdialog.h"
 #include "connectionwindow.h"
+#include "sshout/api.h"
+#include "packet.h"
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>
+#include <QtCore/QDataStream>
+//#include <QtCore/QDateTime>
+#include <QtCore/QTime>
 #include <QtGui/QKeyEvent>
 //#include <QtGui/QRubberBand>
 #include <stdio.h>
@@ -48,6 +53,7 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	this->host = host;
 	this->port = port;
 	connect(ssh_client, SIGNAL(state_changed(SSHClient::SSHState)), SLOT(ssh_state_change(SSHClient::SSHState)));
+	connect(ssh_client, SIGNAL(readyRead()), SLOT(read_ssh()));
 	if(!use_internal_ssh_library) {
 		ExternalSSHClient *extern_ssh_client = (ExternalSSHClient *)ssh_client;
 		extern_ssh_client->register_ready_read_stderr_slot(this, SLOT(read_ssh_stderr()));
@@ -59,6 +65,7 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	ui->textEdit_message_to_send->installEventFilter(this);
 	control_key_pressed = false;
 	ignore_key_event = false;
+	need_reconnect = true;
 	bool show_user_list = config->value("ShowUserList", true).toBool();
 	ui->dockWidget_online_list->setVisible(show_user_list);
 	ui->action_show_online_users->setChecked(show_user_list);
@@ -67,6 +74,8 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 		QVariant v = config->value("WindowSize");
 		if(!v.isNull()) resize(v.toSize());
 	}
+	data_stream = new QDataStream(ssh_client);
+	//data_stream->setByteOrder(QDataStream::BigEndian);
 	connect_ssh();
 }
 
@@ -77,11 +86,11 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *e) {
-	qDebug("function: MainWindow::keyPressEvent(%p)", e);
+	//qDebug("function: MainWindow::keyPressEvent(%p)", e);
 	if(focusWidget() == ui->textEdit_message_to_send) {
 		bool show_tip = true;
 		int key = e->key();
-		qDebug("key = 0x%x", key);
+		//qDebug("key = 0x%x", key);
 		switch(key) {
 			case Qt::Key_Control:
 				show_tip = false;
@@ -108,10 +117,10 @@ void MainWindow::keyPressEvent(QKeyEvent *e) {
 }
 
 void MainWindow::keyReleaseEvent(QKeyEvent *e) {
-	qDebug("function: MainWindow::keyReleaseEvent(%p)", e);
+	//qDebug("function: MainWindow::keyReleaseEvent(%p)", e);
 	if(focusWidget() == ui->textEdit_message_to_send) {
 		int key = e->key();
-		qDebug("key = 0x%x", key);
+		//qDebug("key = 0x%x", key);
 		if(key == Qt::Key_Control) control_key_pressed = false;
 	}
 }
@@ -133,6 +142,7 @@ void MainWindow::save_ui_layout() {
 }
 
 void MainWindow::closeEvent(QCloseEvent *e) {
+	need_reconnect = false;
 	ssh_client->disconnect();
 	save_ui_layout();
 	e->accept();
@@ -144,15 +154,59 @@ void MainWindow::connect_ssh() {
 	}
 }
 
-void MainWindow::send_hello() {
+void MainWindow::print_message(const QString &msg_from, const QString &msg_to, quint8 msg_type, const QByteArray &message) {
+	//QDateTime dt = QDateTime::currentDateTime();
+	QTime t = QTime::currentTime();
+	QString tag = (msg_to.isEmpty() || msg_to == QString("GLOBAL")) ?
+		QString("%1 %2").arg(msg_from).arg(t.toString("H:mm:ss")) :
+		QString("%1 to %2 %3").arg(msg_from).arg(msg_to).arg(t.toString("H:mm:ss"));
+	switch(msg_type) {
+		case SSHOUT_API_MESSAGE_TYPE_PLAIN:
+			ui->chat_area->append(tag + "\n" + message);
+			break;
+		case SSHOUT_API_MESSAGE_TYPE_RICH:
+			ui->chat_area->insertHtml(tag + "<br>" + message);
+			break;
+		case SSHOUT_API_MESSAGE_TYPE_IMAGE:
+			break;
+	}
+}
 
+void MainWindow::send_hello() {
+	quint32 length = 1 + 6 + 2;
+	quint8 type = SSHOUT_API_HELLO;
+	quint16 version = 1;
+	*data_stream << length;
+	*data_stream << type;
+	data_stream->writeRawData("SSHOUT", 6);
+	*data_stream << version;
+	//ssh_client->write("Test");
 }
 
 void MainWindow::send_message() {
 	qDebug("slot: MainWindow::send_message()");
 	QString message = ui->textEdit_message_to_send->toPlainText();
 	if(message.isEmpty()) return;
+
+	QByteArray message_bytes = message.toUtf8();
+	quint32 message_len = message_bytes.length();
+	//QString ui->listWidget_online_users->currentItem()
+	QByteArray to_user("GLOBAL");
+	quint8 to_user_len = to_user.length();
+	quint8 message_type = SSHOUT_API_MESSAGE_TYPE_PLAIN;
+	quint32 packet_length = 1 + 1 + to_user_len + 1 + 4 + message_len;
+	quint8 packet_type = SSHOUT_API_SEND_MESSAGE;
+	//quint8 packet_type = 99;
+	*data_stream << packet_length;
+	*data_stream << packet_type;
+	*data_stream << to_user_len;
+	data_stream->writeRawData(to_user.data(), to_user_len);
+	*data_stream << message_type;
+	*data_stream << message_len;
+	data_stream->writeRawData(message_bytes.data(), message_len);
+
 	ui->textEdit_message_to_send->clear();
+	ui->statusbar->showMessage(tr("Sending message"), 1000);
 }
 
 void MainWindow::ssh_state_change(SSHClient::SSHState state) {
@@ -160,7 +214,7 @@ void MainWindow::ssh_state_change(SSHClient::SSHState state) {
 	switch(state) {
 		case SSHClient::DISCONNECTED:
 			//ui->statusbar->showMessage(tr("Disconnected"));
-			QTimer::singleShot(10000, this, SLOT(connect_ssh()));
+			if(need_reconnect) QTimer::singleShot(10000, this, SLOT(connect_ssh()));
 			break;
 		case SSHClient::CONNECTIING:
 			if(use_internal_ssh_library) ui->statusbar->showMessage(tr("Connecting"));
@@ -177,10 +231,52 @@ void MainWindow::ssh_state_change(SSHClient::SSHState state) {
 
 void MainWindow::read_ssh() {
 	qDebug("slot: MainWindow::read_ssh()");
+	while(ssh_client->bytesAvailable() > 0) {
+		QByteArray data = sshout_get_packet(ssh_client);
+		if(data.isEmpty()) {
+			ssh_client->disconnect();
+			return;
+		}
+		QDataStream stream(&data, QIODevice::ReadOnly);
+		quint8 packet_type;
+		stream >> packet_type;
+		switch(packet_type) {
+			case SSHOUT_API_PASS:
+				qDebug("SSHOUT_API_PASS received");
+				if(data.mid(1, 6) != QString("SSHOUT")) {
+					qWarning("Magic mismatch");
+					ui->chat_area->append(tr("Magic mismatch"));
+					need_reconnect = false;
+					ssh_client->disconnect();
+					return;
+				}
+				stream.skipRawData(6);
+				quint16 version;
+				stream >> version;
+				if(version != 1) {
+					qWarning("Version mismatch (%hu != 1)", version);
+					ui->chat_area->append(tr("Version mismatch (%1 != 1)").arg(version));
+					need_reconnect = false;
+					ssh_client->disconnect();
+					return;
+				}
+				break;
+			case SSHOUT_API_MOTD:
+				qDebug("SSHOUT_API_MOTD received");
+				quint32 length;
+				stream >> length;
+				if((int)length > data.length() - 1 - 4) {
+					qWarning("malformed packet: member size %u out of packet size %d", length, data.length());
+					ssh_client->disconnect();
+					return;
+				}
+				ui->chat_area->append(data.mid(5, length));
+		}
+	}
 }
 
 void MainWindow::read_ssh_stderr() {
-	qDebug("slot: MainWindow::read_ssh_stderr()");
+	//qDebug("slot: MainWindow::read_ssh_stderr()");
 	if(use_internal_ssh_library) return;
 	ExternalSSHClient *extern_ssh_client = (ExternalSSHClient *)ssh_client;
 	while(extern_ssh_client->can_read_line_from_stderr()) {

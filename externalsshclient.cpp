@@ -38,6 +38,10 @@ void ExternalSSHClient::set_extra_args(const QStringList &args) {
 
 bool ExternalSSHClient::connect(const QString &host, quint16 port, const QString &user, const QString &command) {
 	if(ssh_program_path.isEmpty()) return false;
+	if(ssh_state != DISCONNECTED) {
+		qWarning("ExternalSSHClient::connect: current state is not disconnected");
+		return false;
+	}
 	ssh_process->setEnvironment(environment.toList());
 	ssh_args.clear();
 	ssh_args << "-o" << "BatchMode=yes";
@@ -49,8 +53,9 @@ bool ExternalSSHClient::connect(const QString &host, quint16 port, const QString
 	ssh_args << "-T";
 	if(!ssh_args_extra.isEmpty()) ssh_args << ssh_args_extra;
 	if(!command.isEmpty()) ssh_args << command;
-	ssh_process->start(ssh_program_path, ssh_args);
-	//ssh_process->waitForStarted();
+	ssh_process->start(ssh_program_path, ssh_args, QIODevice::ReadWrite);
+	//QIODevice::open(QIODevice::ReadWrite | QIODevice::Unbuffered);
+	QIODevice::open(QIODevice::ReadWrite);
 	return true;
 }
 
@@ -87,7 +92,7 @@ bool ExternalSSHClient::atEnd() const {
 }
 
 qint64 ExternalSSHClient::bytesAvailable() const {
-	return ssh_process->bytesAvailable();
+	return ssh_process->bytesAvailable() + QIODevice::bytesAvailable();
 }
 
 qint64 ExternalSSHClient::bytesToWrite() const {
@@ -103,7 +108,7 @@ bool ExternalSSHClient::isSequential() const {
 }
 
 void ExternalSSHClient::register_ready_read_stderr_slot(QObject *receiver, const char *slot, Qt::ConnectionType type) {
-	qDebug("function: ExternalSSHClient::register_ready_read_stderr_slot(%p, %p<%s>, %d)", receiver, slot, slot, type);
+	//qDebug("function: ExternalSSHClient::register_ready_read_stderr_slot(%p, %p<%s>, %d)", receiver, slot, slot, type);
 	QObject::connect(ssh_process, SIGNAL(readyReadStandardError()), receiver, slot, type);
 }
 
@@ -141,6 +146,7 @@ qint64 ExternalSSHClient::readData(char *data, qint64 maxlen) {
 }
 
 qint64 ExternalSSHClient::writeData(const char *data, qint64 len) {
+	//qDebug("function: ExternalSSHClient::writeData(%p, %lld)", data, (long long int)len);
 	return ssh_process->write(data, len);
 }
 
@@ -175,5 +181,6 @@ void ExternalSSHClient::from_process_finished(int status) {
 }
 
 void ExternalSSHClient::from_process_ready_read() {
+	//qDebug("slot: ExternalSSHClient::from_process_ready_read()");
 	emit readyRead();
 }

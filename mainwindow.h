@@ -38,17 +38,20 @@ protected:
 	void closeEvent(QCloseEvent *);
 
 private:
+	void print_message(const QString &, const QString &, quint8, const QByteArray &);
 	void send_hello();
 	void save_ui_layout();
 	Ui::MainWindow *ui;
 	bool use_internal_ssh_library;
 	SSHClient *ssh_client;
+	QDataStream *data_stream;
 	QString host;
 	quint16 port;
 	QSettings *config;
 	bool send_message_on_enter;
 	bool control_key_pressed;
 	bool ignore_key_event;
+	bool need_reconnect;
 
 private slots:
 	void connect_ssh();

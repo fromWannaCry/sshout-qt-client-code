@@ -17,7 +17,8 @@ SOURCES += main.cpp\
     settingsdialog.cpp \
     mainwindow.cpp \
     sshclient.cpp \
-    externalsshclient.cpp
+    externalsshclient.cpp \
+    packet.cpp
 
 HEADERS  += connectionwindow.h \
     settingsdialog.h \
@@ -25,7 +26,8 @@ HEADERS  += connectionwindow.h \
     serverinformation.h \
     sshclient.h \
     externalsshclient.h \
-    common.h
+    common.h \
+    packet.h
 
 FORMS    += connectionwindow.ui \
     settingsdialog.ui \

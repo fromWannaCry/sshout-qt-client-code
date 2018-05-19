@@ -1,0 +1,3 @@
+[submodule "sshout"]
+	path = sshout
+	url = git://git.code.sf.net/p/sshout/daemon-code
