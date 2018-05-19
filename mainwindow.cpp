@@ -19,16 +19,20 @@
 #include "internalsshclient.h"
 #endif
 #include "externalsshclient.h"
+#include "settingsdialog.h"
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>
+#include <QtGui/QKeyEvent>
 //#include <QtGui/QRubberBand>
 #include <stdio.h>
+#include <QtCore/QDebug>
 
 MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, quint16 port, const QString &identify_file) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow)
 {
 	ui->setupUi(this);
+	this->config = config;
 	//setMouseTracking(true);
 #ifdef HAVE_OPENSSH_LIBRARY
 	use_internal_ssh_library = config->value("UseInternalSSHLibrary", false).toBool();
@@ -49,16 +53,60 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 		QString args = config->value("SSHArgs").toString();
 		if(!args.isEmpty()) extern_ssh_client->set_extra_args(args.split(' '));
 	}
+	send_message_on_enter = config->value("UseEnterToSendMessage", true).toBool();
+	ui->action_press_enter_to_send_message->setChecked(send_message_on_enter);
+	ui->textEdit_message_to_send->installEventFilter(this);
+	control_key_pressed = false;
+	ignore_key_event = false;
 	connect_ssh();
 }
 
 MainWindow::~MainWindow()
 {
 	delete ui;
+	delete ssh_client;
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *e) {
+	qDebug("function: MainWindow::keyPressEvent(%p)", e);
+	if(focusWidget() == ui->textEdit_message_to_send) {
+		int key = e->key();
+		qDebug("key = 0x%x", key);
+		switch(key) {
+			case Qt::Key_Control:
+				control_key_pressed = true;
+				break;
+			case Qt::Key_Enter:
+			case Qt::Key_Return:
+				if(send_message_on_enter) {
+					if(control_key_pressed) ui->textEdit_message_to_send->insertPlainText("\n");
+					else send_message();
+					ignore_key_event = true;
+				} else if(control_key_pressed) {
+					send_message();
+					ignore_key_event = true;
+				}
+				break;
+		}
+	}
+}
+
+void MainWindow::keyReleaseEvent(QKeyEvent *e) {
+	qDebug("function: MainWindow::keyReleaseEvent(%p)", e);
+	if(focusWidget() == ui->textEdit_message_to_send) {
+		int key = e->key();
+		qDebug("key = 0x%x", key);
+		if(key == Qt::Key_Control) control_key_pressed = false;
+	}
 }
 
 bool MainWindow::eventFilter(QObject *o, QEvent *e) {
-	qDebug("function: MainWindow::eventFilter(%p, %p)", o, e);
+	//qDebug("function: MainWindow::eventFilter(%p, %p)", o, e);
+	if(o != ui->textEdit_message_to_send) return QObject::eventFilter(o, e);
+	if(e->type() != QEvent::KeyPress) return QObject::eventFilter(o, e);
+	keyPressEvent(static_cast<QKeyEvent *>(e));
+	if(!ignore_key_event) return false;
+	ignore_key_event = false;
 	return true;
 }
 
@@ -72,11 +120,16 @@ void MainWindow::send_hello() {
 
 }
 
+void MainWindow::send_message() {
+	qDebug("slot: MainWindow::send_message()");
+	ui->textEdit_message_to_send->clear();
+}
+
 void MainWindow::ssh_state_change(SSHClient::SSHState state) {
 	qDebug("slot: MainWindow::on_ssh_state_change(%d)", state);
 	switch(state) {
 		case SSHClient::DISCONNECTED:
-			ui->statusbar->showMessage(tr("Disconnected"));
+			//ui->statusbar->showMessage(tr("Disconnected"));
 			QTimer::singleShot(10000, this, SLOT(connect_ssh()));
 			break;
 		case SSHClient::CONNECTIING:
@@ -108,4 +161,15 @@ void MainWindow::read_ssh_stderr() {
 		if(data[len - 1] == '\n') data.resize(len - 1);
 		ui->statusbar->showMessage(QString::fromLocal8Bit(data), 10000);
 	}
+}
+
+void MainWindow::set_send_message_on_enter(bool v) {
+	qDebug("slot: MainWindow::set_send_message_on_enter(%s)", v ? "true" : "false");
+	send_message_on_enter = v;
+	config->setValue("UseEnterToSendMessage", v);
+}
+
+void MainWindow::settings() {
+	SettingsDialog d(this, config);
+	d.exec();
 }

@@ -24,8 +24,7 @@ namespace Ui {
 class MainWindow;
 }
 
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow {
 	Q_OBJECT
 	
 public:
@@ -33,6 +32,8 @@ public:
 	~MainWindow();
 
 protected:
+	void keyPressEvent(QKeyEvent *);
+	void keyReleaseEvent(QKeyEvent *);
 	bool eventFilter(QObject *, QEvent *);
 
 private:
@@ -42,6 +43,10 @@ private:
 	SSHClient *ssh_client;
 	QString host;
 	quint16 port;
+	QSettings *config;
+	bool send_message_on_enter;
+	bool control_key_pressed;
+	bool ignore_key_event;
 
 private slots:
 	void connect_ssh();
@@ -51,6 +56,9 @@ private slots:
 	//void on_ssh_ready_read_stderr();
 	void read_ssh();
 	void read_ssh_stderr();
+	void set_send_message_on_enter(bool);
+	void settings();
+	void send_message();
 };
 
 #endif // MAINWINDOW_H
