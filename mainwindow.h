@@ -47,7 +47,7 @@ private:
 		int id;
 		QString host_name;
 	};
-	void print_message(const QString &, const QString &, quint8, const QByteArray &);
+	void print_message(const QTime &t, const QString &, const QString &, quint8, const QByteArray &);
 	void send_hello();
 	void save_ui_layout();
 	void add_user_item(const QString &, QList<UserIdAndHostName> *);

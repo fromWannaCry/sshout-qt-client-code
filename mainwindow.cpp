@@ -159,12 +159,14 @@ void MainWindow::connect_ssh() {
 	}
 }
 
-void MainWindow::print_message(const QString &msg_from, const QString &msg_to, quint8 msg_type, const QByteArray &message) {
+void MainWindow::print_message(const QTime &time, const QString &msg_from, const QString &msg_to, quint8 msg_type, const QByteArray &message) {
 	//QDateTime dt = QDateTime::currentDateTime();
-	QTime t = QTime::currentTime();
+	//QTime t = QTime::currentTime();
 	QString tag = (msg_to.isEmpty() || msg_to == QString("GLOBAL")) ?
-		QString("%1 %2").arg(msg_from).arg(t.toString("H:mm:ss")) :
-		QString("%1 to %2 %3").arg(msg_from).arg(msg_to).arg(t.toString("H:mm:ss"));
+		QString("%1 %2").arg(msg_from).arg(time.toString("H:mm:ss")) :
+		QString("%1 to %2 %3").arg(msg_from).arg(msg_to).arg(time.toString("H:mm:ss"));
+	qDebug() << QString::fromUtf8(message);
+	qDebug() << tag;
 	switch(msg_type) {
 		case SSHOUT_API_MESSAGE_TYPE_PLAIN:
 			ui->chat_area->append(tag + "\n" + message);
@@ -175,6 +177,7 @@ void MainWindow::print_message(const QString &msg_from, const QString &msg_to, q
 		case SSHOUT_API_MESSAGE_TYPE_IMAGE:
 			break;
 	}
+	ui->chat_area->append(QString());
 }
 
 void MainWindow::send_hello() {
@@ -339,6 +342,48 @@ void MainWindow::read_ssh() {
 					}
 					update_user_list(users, count);
 				}
+				break;
+			case SSHOUT_API_RECEIVE_MESSAGE:
+				qDebug("SSHOUT_API_RECEIVE_MESSAGE received");
+				{
+					quint64 time;
+					stream >> time;
+					quint8 from_user_len;
+					stream >> from_user_len;
+					if(1 + 8 + 1 + from_user_len + 1 + 1 + 4 > data.length()) {
+						qWarning("malformed SSHOUT_API_RECEIVE_MESSAGE packet: from_user_len %hhu too large", from_user_len);
+						ssh_client->disconnect();
+						return;
+					}
+					char from_user[from_user_len];
+					stream.readRawData(from_user, from_user_len);
+					quint8 to_user_len;
+					stream >> to_user_len;
+					if(1 + 8 + 1 + from_user_len + 1 + to_user_len + 1 + 4 > data.length()) {
+						qWarning("malformed SSHOUT_API_RECEIVE_MESSAGE packet: to_user_len %hhu too large", to_user_len);
+						ssh_client->disconnect();
+						return;
+					}
+					char to_user[to_user_len];
+					stream.readRawData(to_user, to_user_len);
+					quint8 msg_type;
+					stream >> msg_type;
+					quint32 msg_len;
+					stream >> msg_len;
+					//qDebug() << time << from_user_len << to_user_len << msg_type;
+					if(1 + 8 + 1 + (int)from_user_len + 1 + (int)to_user_len + 1 + 4 + (int)msg_len > data.length()) {
+						qWarning("malformed SSHOUT_API_RECEIVE_MESSAGE packet: msg_len %hhu too large", msg_len);
+						ssh_client->disconnect();
+						return;
+					}
+					qDebug() << msg_len;
+					print_message(QDateTime::fromTime_t(time).time(),
+						      QString::fromUtf8(from_user, from_user_len),
+						      QString::fromUtf8(to_user, to_user_len),
+						      msg_type,
+						      data.mid(1 + 8 + 1 + from_user_len + 1 + to_user_len + 1 + 4, msg_len));
+				}
+				break;
 			case SSHOUT_API_MOTD:
 				qDebug("SSHOUT_API_MOTD received");
 				quint32 length;
@@ -349,6 +394,7 @@ void MainWindow::read_ssh() {
 					return;
 				}
 				ui->chat_area->append(data.mid(5, length));
+				break;
 		}
 	}
 }
