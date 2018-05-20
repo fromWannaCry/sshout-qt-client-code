@@ -81,6 +81,7 @@ private slots:
 	void send_message();
 	void change_server();
 	void send_request_online_users();
+	void set_use_html(bool);
 };
 
 #endif // MAINWINDOW_H

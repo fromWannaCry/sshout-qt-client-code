@@ -63,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	}
 	send_message_on_enter = config->value("UseEnterToSendMessage", true).toBool();
 	ui->action_press_enter_to_send_message->setChecked(send_message_on_enter);
+	ui->action_use_html_for_sending_messages->setChecked(config->value("UseHTMLForSendingMessages", false).toBool());
 	ui->textEdit_message_to_send->installEventFilter(this);
 	control_key_pressed = false;
 	ignore_key_event = false;
@@ -88,6 +89,8 @@ MainWindow::~MainWindow()
 {
 	delete ui;
 	delete ssh_client;
+	delete data_stream;
+	delete timer;
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *e) {
@@ -164,15 +167,15 @@ void MainWindow::print_message(const QTime &time, const QString &msg_from, const
 	//QTime t = QTime::currentTime();
 	QString tag = (msg_to.isEmpty() || msg_to == QString("GLOBAL")) ?
 		QString("%1 %2").arg(msg_from).arg(time.toString("H:mm:ss")) :
-		QString("%1 to %2 %3").arg(msg_from).arg(msg_to).arg(time.toString("H:mm:ss"));
+		tr("%1 to %2 %3").arg(msg_from).arg(msg_to).arg(time.toString("H:mm:ss"));
 	qDebug() << QString::fromUtf8(message);
 	qDebug() << tag;
 	switch(msg_type) {
 		case SSHOUT_API_MESSAGE_TYPE_PLAIN:
-			ui->chat_area->append(tag + "\n" + message);
+			ui->chat_area->append(tag + "\n" + QString::fromUtf8(message));
 			break;
 		case SSHOUT_API_MESSAGE_TYPE_RICH:
-			ui->chat_area->insertHtml(tag + "<br>" + message);
+			ui->chat_area->insertHtml(tag + QString::fromUtf8(message));
 			break;
 		case SSHOUT_API_MESSAGE_TYPE_IMAGE:
 			break;
@@ -193,7 +196,8 @@ void MainWindow::send_hello() {
 
 void MainWindow::send_message() {
 	qDebug("slot: MainWindow::send_message()");
-	QString message = ui->textEdit_message_to_send->toPlainText();
+	bool use_html = ui->action_use_html_for_sending_messages->isChecked();
+	QString message = use_html ? ui->textEdit_message_to_send->toHtml() : ui->textEdit_message_to_send->toPlainText();
 	if(message.isEmpty()) return;
 
 	QByteArray message_bytes = message.toUtf8();
@@ -201,7 +205,7 @@ void MainWindow::send_message() {
 	//QString ui->listWidget_online_users->currentItem()
 	QByteArray to_user("GLOBAL");
 	quint8 to_user_len = to_user.length();
-	quint8 message_type = SSHOUT_API_MESSAGE_TYPE_PLAIN;
+	quint8 message_type = use_html ? SSHOUT_API_MESSAGE_TYPE_RICH : SSHOUT_API_MESSAGE_TYPE_PLAIN;
 	quint32 packet_length = 1 + 1 + to_user_len + 1 + 4 + message_len;
 	quint8 packet_type = SSHOUT_API_SEND_MESSAGE;
 	//quint8 packet_type = 99;
@@ -237,6 +241,7 @@ void MainWindow::remove_offline_user_items(const QSet<QString> &keep_set) {
 	//qDebug() << items;
 	foreach(QListWidgetItem *i, items) {
 		if(keep_set.contains(i->text())) continue;
+		delete (QList<UserIdAndHostName> *)i->data((int)Qt::UserRole).value<void *>();
 		delete i;
 	}
 }
@@ -272,6 +277,7 @@ void MainWindow::update_user_state(const QString &user, quint8 state) {
 		//qDebug() << items;
 		if(items.isEmpty()) return;
 		Q_ASSERT(items.count() == 1);
+		delete (QList<UserIdAndHostName> *)items[0]->data((int)Qt::UserRole).value<void *>();
 		delete items[0];
 	}
 }
@@ -282,10 +288,11 @@ void MainWindow::print_error(quint32 error_code, const QString &error_message) {
 }
 
 void MainWindow::ssh_state_change(SSHClient::SSHState state) {
-	qDebug("slot: MainWindow::on_ssh_state_change(%d)", state);
+	qDebug("slot: MainWindow::ssh_state_change(%d)", state);
 	switch(state) {
 		case SSHClient::DISCONNECTED:
 			//ui->statusbar->showMessage(tr("Disconnected"));
+			timer->stop();
 			if(need_reconnect) QTimer::singleShot(10000, this, SLOT(connect_ssh()));
 			break;
 		case SSHClient::CONNECTIING:
@@ -304,11 +311,33 @@ void MainWindow::ssh_state_change(SSHClient::SSHState state) {
 void MainWindow::read_ssh() {
 	qDebug("slot: MainWindow::read_ssh()");
 	while(ssh_client->bytesAvailable() > 0) {
+#if 0
 		QByteArray data = sshout_get_packet(ssh_client);
 		if(data.isEmpty()) {
-			ssh_client->disconnect();
+			//ssh_client->disconnect();
 			return;
 		}
+#else
+		QByteArray data;
+		switch(sshout_get_packet(ssh_client, &data)) {
+			case SSHOUT_GET_PACKET_SUCCESS:
+				break;
+			case SSHOUT_GET_PACKET_INCOMPLETE:
+				continue;
+			case SSHOUT_GET_PACKET_READ_ERROR:
+				ssh_client->disconnect();
+				return;
+			case SSHOUT_GET_PACKET_SHORT_READ:
+				ssh_client->disconnect();
+				return;
+			case SSHOUT_GET_PACKET_TOO_LONG:
+				ssh_client->disconnect();
+				return;
+			case SSHOUT_GET_PACKET_TOO_SHORT:
+				ssh_client->disconnect();
+				return;
+		}
+#endif
 		QDataStream stream(&data, QIODevice::ReadOnly);
 		quint8 packet_type;
 		stream >> packet_type;
@@ -333,6 +362,7 @@ void MainWindow::read_ssh() {
 					return;
 				}
 				send_request_online_users();
+				timer->start();
 				break;
 			case SSHOUT_API_ONLINE_USERS_INFO:
 				qDebug("SSHOUT_API_ONLINE_USERS_INFO received");
@@ -389,10 +419,10 @@ void MainWindow::read_ssh() {
 					stream >> msg_type;
 					quint32 msg_len;
 					stream >> msg_len;
-					//qDebug() << time << from_user_len << to_user_len << msg_type;
+					qDebug() << data.length() << time << from_user_len << to_user_len << msg_type;
 					if(1 + 8 + 1 + (int)from_user_len + 1 + (int)to_user_len + 1 + 4 + (int)msg_len > data.length()) {
 						qWarning("malformed SSHOUT_API_RECEIVE_MESSAGE packet: msg_len %hhu too large", msg_len);
-						ssh_client->disconnect();
+						//ssh_client->disconnect();
 						return;
 					}
 					qDebug() << msg_len;
@@ -433,6 +463,7 @@ void MainWindow::read_ssh() {
 					}
 					print_error(error_code, QString::fromUtf8(data.mid(9, error_msg_len)));
 				}
+				break;
 			case SSHOUT_API_MOTD:
 				qDebug("SSHOUT_API_MOTD received");
 				quint32 length;
@@ -442,7 +473,7 @@ void MainWindow::read_ssh() {
 					ssh_client->disconnect();
 					return;
 				}
-				ui->chat_area->append(data.mid(5, length));
+				ui->chat_area->append(QString::fromUtf8(data.mid(5, length)) + "\n");
 				break;
 		}
 	}
@@ -477,4 +508,8 @@ void MainWindow::change_server() {
 	ConnectionWindow *w = new ConnectionWindow(NULL, config);
 	w->show();
 	close();
+}
+
+void MainWindow::set_use_html(bool v) {
+	config->setValue("UseHTMLForSendingMessages", v);
 }

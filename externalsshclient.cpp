@@ -22,6 +22,7 @@ ExternalSSHClient::ExternalSSHClient(QObject *parent, const QString &ssh_program
 	this->ssh_program_path = ssh_program_path;
 	ssh_process = new QProcess(this);
 	environment = ssh_process->systemEnvironment().toSet();
+	reconnect_interval = -1;
 	QObject::connect(ssh_process, SIGNAL(stateChanged(QProcess::ProcessState)), SLOT(from_process_state_change(QProcess::ProcessState)));
 	QObject::connect(ssh_process, SIGNAL(started()), SLOT(from_process_started()));
 	QObject::connect(ssh_process, SIGNAL(finished(int)), SLOT(from_process_finished(int)));
@@ -63,6 +64,7 @@ void ExternalSSHClient::disconnect() {
 	qDebug("function: ExternalSSHClient::disconnect()");
 	ssh_process->terminate();
 	ssh_process->close();
+	QIODevice::close();
 }
 
 void ExternalSSHClient::reconnect() {

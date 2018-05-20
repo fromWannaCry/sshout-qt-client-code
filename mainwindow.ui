@@ -71,6 +71,7 @@
     </property>
     <addaction name="action_press_enter_to_send_message"/>
     <addaction name="action_settings"/>
+    <addaction name="action_use_html_for_sending_messages"/>
    </widget>
    <widget class="QMenu" name="menu_View">
     <property name="title">
@@ -86,7 +87,7 @@
   <widget class="QDockWidget" name="dockWidget_online_list">
    <property name="minimumSize">
     <size>
-     <width>80</width>
+     <width>108</width>
      <height>152</height>
     </size>
    </property>
@@ -166,6 +167,14 @@
    </property>
    <property name="text">
     <string>Show On-line Users</string>
+   </property>
+  </action>
+  <action name="action_use_html_for_sending_messages">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Send message in HTML format</string>
    </property>
   </action>
  </widget>
@@ -267,11 +276,28 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>action_use_html_for_sending_messages</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>set_use_html(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>201</x>
+     <y>191</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>set_send_message_on_enter(bool)</slot>
   <slot>settings()</slot>
   <slot>send_message()</slot>
   <slot>change_server()</slot>
+  <slot>set_use_html(bool)</slot>
  </slots>
 </ui>
