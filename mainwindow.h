@@ -53,6 +53,7 @@ private:
 	void add_user_item(const QString &, QList<UserIdAndHostName> *);
 	void remove_offline_user_items(const QSet<QString> &);
 	void update_user_list(const UserInfo *, unsigned int);
+	void update_user_state(const QString &, quint8);
 	Ui::MainWindow *ui;
 	bool use_internal_ssh_library;
 	SSHClient *ssh_client;

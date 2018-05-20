@@ -221,6 +221,7 @@ void MainWindow::add_user_item(const QString &user_name, QList<UserIdAndHostName
 	QListWidgetItem *item;
 	QList<QListWidgetItem *> orig_items = ui->listWidget_online_users->findItems(user_name, Qt::MatchFixedString | Qt::MatchCaseSensitive);
 	int exists = orig_items.length();
+	qDebug("exists = %d", exists);
 	if(exists) {
 		Q_ASSERT(exists == 1);
 		item = orig_items[0];
@@ -260,6 +261,20 @@ void MainWindow::send_request_online_users() {
 	quint8 type = SSHOUT_API_GET_ONLINE_USER;
 	*data_stream << length;
 	*data_stream << type;
+}
+
+void MainWindow::update_user_state(const QString &user, quint8 state) {
+	ui->chat_area->append(tr("%1 is %2").arg(user).arg(state ? tr("joined") : tr("leave")));
+	if(state) {
+		send_request_online_users();
+		timer->start();
+	} else {
+		QList<QListWidgetItem *> items = ui->listWidget_online_users->findItems(user, Qt::MatchFixedString | Qt::MatchCaseSensitive);
+		qDebug() << items;
+		if(items.isEmpty()) return;
+		Q_ASSERT(items.count() == 1);
+		delete items[0];
+	}
 }
 
 void MainWindow::ssh_state_change(SSHClient::SSHState state) {
@@ -382,6 +397,22 @@ void MainWindow::read_ssh() {
 						      QString::fromUtf8(to_user, to_user_len),
 						      msg_type,
 						      data.mid(1 + 8 + 1 + from_user_len + 1 + to_user_len + 1 + 4, msg_len));
+				}
+				break;
+			case SSHOUT_API_USER_STATE_CHANGE:
+				qDebug("SSHOUT_API_USER_STATE_CHANGE received");
+				{
+					qDebug("length: %d", data.length());
+					quint8 state;
+					stream >> state;
+					quint8 user_name_len;
+					stream >> user_name_len;
+					if(1 + 1 + 1 + (int)user_name_len > data.length()) {
+						qWarning("malformed SSHOUT_API_USER_STATE_CHANGE packet: user_name_len %hhu too large", user_name_len);
+						ssh_client->disconnect();
+						return;
+					}
+					update_user_state(QString::fromUtf8(data.mid(3, user_name_len)), state);
 				}
 				break;
 			case SSHOUT_API_MOTD:
