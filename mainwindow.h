@@ -54,6 +54,7 @@ private:
 	void remove_offline_user_items(const QSet<QString> &);
 	void update_user_list(const UserInfo *, unsigned int);
 	void update_user_state(const QString &, quint8);
+	void print_error(quint32, const QString &);
 	Ui::MainWindow *ui;
 	bool use_internal_ssh_library;
 	SSHClient *ssh_client;

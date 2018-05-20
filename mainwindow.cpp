@@ -221,7 +221,6 @@ void MainWindow::add_user_item(const QString &user_name, QList<UserIdAndHostName
 	QListWidgetItem *item;
 	QList<QListWidgetItem *> orig_items = ui->listWidget_online_users->findItems(user_name, Qt::MatchFixedString | Qt::MatchCaseSensitive);
 	int exists = orig_items.length();
-	qDebug("exists = %d", exists);
 	if(exists) {
 		Q_ASSERT(exists == 1);
 		item = orig_items[0];
@@ -270,11 +269,16 @@ void MainWindow::update_user_state(const QString &user, quint8 state) {
 		timer->start();
 	} else {
 		QList<QListWidgetItem *> items = ui->listWidget_online_users->findItems(user, Qt::MatchFixedString | Qt::MatchCaseSensitive);
-		qDebug() << items;
+		//qDebug() << items;
 		if(items.isEmpty()) return;
 		Q_ASSERT(items.count() == 1);
 		delete items[0];
 	}
+}
+
+void MainWindow::print_error(quint32 error_code, const QString &error_message) {
+	qDebug("MainWindow::print_error(%u, const QString &)", (unsigned int)error_code);
+	ui->chat_area->append(tr("Error from server: %1").arg(error_message));
 }
 
 void MainWindow::ssh_state_change(SSHClient::SSHState state) {
@@ -415,6 +419,20 @@ void MainWindow::read_ssh() {
 					update_user_state(QString::fromUtf8(data.mid(3, user_name_len)), state);
 				}
 				break;
+			case SSHOUT_API_ERROR:
+				qDebug("SSHOUT_API_ERROR received");
+				{
+					quint32 error_code;
+					stream >> error_code;
+					quint32 error_msg_len;
+					stream >> error_msg_len;
+					if(1 + 4 + 4 + (int)error_msg_len > data.length()) {
+						qWarning("malformed SSHOUT_API_ERROR packet: error_msg_len %hhu too large", error_msg_len);
+						ssh_client->disconnect();
+						return;
+					}
+					print_error(error_code, QString::fromUtf8(data.mid(9, error_msg_len)));
+				}
 			case SSHOUT_API_MOTD:
 				qDebug("SSHOUT_API_MOTD received");
 				quint32 length;
