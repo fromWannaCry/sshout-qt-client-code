@@ -32,3 +32,5 @@ HEADERS  += connectionwindow.h \
 FORMS    += connectionwindow.ui \
     settingsdialog.ui \
     mainwindow.ui
+
+#DEFINES += __STDC__

@@ -78,6 +78,9 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	ui->textEdit_message_to_send->setFocus();
 	data_stream = new QDataStream(ssh_client);
 	//data_stream->setByteOrder(QDataStream::BigEndian);
+	timer = new QTimer(this);
+	timer->setInterval(60000);
+	connect(timer, SIGNAL(timeout()), SLOT(send_request_online_users()));
 	connect_ssh();
 }
 

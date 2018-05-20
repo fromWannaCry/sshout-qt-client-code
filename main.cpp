@@ -15,15 +15,29 @@
 #include "serverinformation.h"
 #include "connectionwindow.h"
 #include "mainwindow.h"
+#include <getopt.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <sys/stat.h>
 #include <QtGui/QApplication>
 #include <QtCore/QSettings>
+#include <QtCore/QUrl>
 //#include <QtCore/QTextCodec>
 #include <QtCore/QFile>
 #include <QtCore/QDir>
 #include <QtCore/QDebug>
 
 #define CONFIG_FILE_NAME "sshout.cfg"
+
+static void print_usage(const char *name) {
+	fprintf(stderr, "Usage: %s [<options>] [<host>|ssh://<host>[:<port>][/]]\n"
+		"Options:\n"
+		"	--port <n>, -p <n>	Specify port for host as <n>, default 22\n"
+		"	--identify-file <path>, -i <path>\n"
+		"				Specify the identify file\n"
+		"	--style <style>		Use QStyle <style>\n",
+		name);
+}
 
 QString config_dir() {
 	QString appath = QApplication::applicationDirPath();
@@ -41,14 +55,70 @@ QString config_dir() {
 
 int main(int argc, char *argv[]) {
 	qRegisterMetaTypeStreamOperators<ServerInformation>("ServerInformation");
+
+	static option long_options[] = {
+		{ "port", 1, NULL, 'p' },
+		{ "identify-file", 1, NULL, 'i' },
+		{ "style", 1, NULL, 0 },
+		{ "help", 0, NULL, 'h' },
+		{ NULL, 0, NULL, 0 }
+	};
+	int port = -1;
+	const char *identify_file = NULL;
+	const char *style = NULL;
+	while(true) {
+		int option_index;
+		int c = getopt_long(argc, argv, "p:i:h", long_options, &option_index);
+		if(c == EOF) break;
+		switch(c) {
+			case 0:
+				if(option_index == 2) {
+					style = optarg;
+				}
+				break;
+			case 'p':
+				port = atoi(optarg);
+				break;
+			case 'i':
+				identify_file = optarg;
+				break;
+			case 'h':
+				print_usage(argv[0]);
+				return 0;
+			case '?':
+				return -1;
+		}
+	}
+
+	if(style) QApplication::setStyle(QString::fromLocal8Bit(style));
+
+	QApplication a(argc, argv);
 	QSettings config(config_dir() + "/" CONFIG_FILE_NAME, (QSettings::Format)1);
 	config.setIniCodec("UTF-8");
-	QString style = config.value("Style").toString();
-	if(!style.isEmpty()) QApplication::setStyle(style);
-	QApplication a(argc, argv);
+	if(!style) {
+		QString style = config.value("Style").toString();
+		if(!style.isEmpty()) a.setStyle(style);
+	}
+	if(argc - optind > 1) {
+		print_usage(argv[0]);
+		return -1;
+	}
+	if(argc - optind == 1) {
+		QString host;
+		char *maybe_url = argv[optind];
+		QUrl url(maybe_url);
+		if(url.scheme() == QString("ssh")) {
+			host = url.host();
+			if(port == -1) port = url.port();
+		} else host = QString(maybe_url);
+		if(port == -1) port = 22;
+		MainWindow w(NULL, &config, host, port, QString(identify_file));
+		w.show();
+		return a.exec();
+	}
 	//QStringList server_list = config.value("ServerList").toStringList();
 	QList<QVariant> server_list = config.value("ServerList").toList();
-	QDebug d(QtDebugMsg);
+	//QDebug d(QtDebugMsg);
 	//d.operator <<("1");
 	//d << "1";
 	qDebug() << server_list;

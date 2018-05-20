@@ -53,7 +53,6 @@ private:
 	void add_user_item(const QString &, QList<UserIdAndHostName> *);
 	void remove_offline_user_items(const QSet<QString> &);
 	void update_user_list(const UserInfo *, unsigned int);
-	void send_request_online_users();
 	Ui::MainWindow *ui;
 	bool use_internal_ssh_library;
 	SSHClient *ssh_client;
@@ -65,6 +64,7 @@ private:
 	bool control_key_pressed;
 	bool ignore_key_event;
 	bool need_reconnect;
+	QTimer *timer;
 
 private slots:
 	void connect_ssh();
@@ -78,6 +78,7 @@ private slots:
 	void settings();
 	void send_message();
 	void change_server();
+	void send_request_online_users();
 };
 
 #endif // MAINWINDOW_H
