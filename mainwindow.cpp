@@ -28,9 +28,13 @@
 #include <QtCore/QDataStream>
 //#include <QtCore/QDateTime>
 #include <QtCore/QTime>
+#include <QtCore/QBuffer>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QListWidgetItem>
 //#include <QtGui/QRubberBand>
+#include <QtGui/QImage>
+#include <QtGui/QFileDialog>
+#include <QtGui/QMessageBox>
 #include <stdio.h>
 #include <QtCore/QDebug>
 
@@ -512,4 +516,40 @@ void MainWindow::change_server() {
 
 void MainWindow::set_use_html(bool v) {
 	config->setValue("UseHTMLForSendingMessages", v);
+}
+
+void MainWindow::send_image() {
+	QFileDialog d(this, tr("Choose an image to upload"));
+	d.setAcceptMode(QFileDialog::AcceptOpen);
+	d.setFileMode(QFileDialog::ExistingFile);
+	d.setOption(QFileDialog::DontUseNativeDialog);
+	if(d.exec()) {
+		const QString &path = d.selectedFiles()[0];
+		QImage image(path);
+		if(image.isNull()) {
+			QMessageBox::critical(this, QString(), tr("Cannot load file '%1' as an image").arg(path));
+			return;
+		}
+		QByteArray data;
+		QBuffer buffer(&data, this);
+		buffer.open(QIODevice::WriteOnly);
+		if(!image.save(&buffer, "JPEG")) {
+			QMessageBox::critical(this, QString(), tr("Cannot export the image as JPEG"));
+			return;
+		}
+		buffer.close();
+		QByteArray to_user("GLOBAL");
+		quint8 to_user_len = to_user.length();
+		quint8 message_type = SSHOUT_API_MESSAGE_TYPE_IMAGE;
+		quint32 message_len = data.length();
+		quint32 packet_length = 1 + 1 + to_user_len + 1 + 4 + message_len;
+		quint8 packet_type = SSHOUT_API_SEND_MESSAGE;
+		*data_stream << packet_length;
+		*data_stream << packet_type;
+		*data_stream << to_user_len;
+		data_stream->writeRawData(to_user.data(), to_user_len);
+		*data_stream << message_type;
+		*data_stream << message_len;
+		data_stream->writeRawData(data.data(), message_len);
+	}
 }

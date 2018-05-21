@@ -70,8 +70,8 @@
      <string>&amp;Edit</string>
     </property>
     <addaction name="action_press_enter_to_send_message"/>
-    <addaction name="action_settings"/>
     <addaction name="action_use_html_for_sending_messages"/>
+    <addaction name="action_settings"/>
    </widget>
    <widget class="QMenu" name="menu_View">
     <property name="title">
@@ -129,6 +129,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="action_send"/>
+   <addaction name="action_send_image"/>
   </widget>
   <action name="action_press_enter_to_send_message">
    <property name="checkable">
@@ -147,10 +148,16 @@
    <property name="text">
     <string>&amp;Change server</string>
    </property>
+   <property name="toolTip">
+    <string>Logout and choose another server</string>
+   </property>
   </action>
   <action name="action_logout">
    <property name="text">
     <string>&amp;Logout</string>
+   </property>
+   <property name="toolTip">
+    <string>Logout and exit</string>
    </property>
   </action>
   <action name="action_send">
@@ -175,6 +182,11 @@
    </property>
    <property name="text">
     <string>Send message in HTML format</string>
+   </property>
+  </action>
+  <action name="action_send_image">
+   <property name="text">
+    <string>Send Image...</string>
    </property>
   </action>
  </widget>
@@ -292,6 +304,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>action_send_image</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>send_image()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>201</x>
+     <y>191</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>set_send_message_on_enter(bool)</slot>
@@ -299,5 +327,6 @@
   <slot>send_message()</slot>
   <slot>change_server()</slot>
   <slot>set_use_html(bool)</slot>
+  <slot>send_image()</slot>
  </slots>
 </ui>
