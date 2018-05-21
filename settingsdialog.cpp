@@ -19,6 +19,7 @@
 #if QT_VERSION < 0x050000
 #include <QtGui/QFileDialog>
 #include <QtGui/QMessageBox>
+#include <QtGui/QFont>
 #else
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
@@ -53,6 +54,17 @@ SettingsDialog::SettingsDialog(QWidget *parent, QSettings *config) :
 	foreach(const QString &key, key_list) {
 		add_environment_variable(key, config->value(key).toString());
 	}
+	config->endGroup();
+
+	config->beginGroup("Text");
+#if 0
+	QVariant font = config->value("DefaultFontFamily");
+	if(!font.isNull()) ui->fontComboBox->setCurrentFont(font.value<QFont>());
+#else
+	QString font_name = config->value("DefaultFontFamily").toString();
+	if(!font_name.isEmpty()) ui->fontComboBox->setCurrentFont(QFont(font_name));
+#endif
+	ui->spinBox_font_size->setValue(config->value("DefaultFontSize", 2).toInt());
 	config->endGroup();
 
 	this->config = config;
@@ -124,5 +136,10 @@ void SettingsDialog::save_settings() {
 		const QString &value = ui->environment_list->topLevelItem(i)->text(1);
 		if(!name.isEmpty()) config->setValue(name, value);
 	}
+	config->endGroup();
+	config->beginGroup("Text");
+	//config->setValue("DefaultFontFamily", ui->fontComboBox->currentFont());
+	config->setValue("DefaultFontFamily", ui->fontComboBox->currentFont().toString());
+	config->setValue("DefaultFontSize", ui->spinBox_font_size->value());
 	config->endGroup();
 }

@@ -112,6 +112,7 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 		qWarning("Cannot create cache directory");
 		QMessageBox::warning(this, QString(), tr("Failed to create cache directory '%1'").arg(cache_dir->path()));
 	}
+	apply_chat_area_config();
 	connect_ssh();
 }
 
@@ -275,23 +276,24 @@ void MainWindow::print_message(const QTime &time, const QString &msg_from, const
 	QScrollBar *chat_area_scroll_bar = ui->chat_area->verticalScrollBar();
 	bool should_scroll = chat_area_scroll_bar->value() >= chat_area_scroll_bar->maximum();
 	//ui->chat_area->append(QString());
-	QTextCursor cursor = ui->textEdit_message_to_send->textCursor();
+	QTextCursor cursor = ui->chat_area->textCursor();
 	cursor.movePosition(QTextCursor::End);
-	ui->textEdit_message_to_send->setTextCursor(cursor);
+	ui->chat_area->setTextCursor(cursor);
 	ui->chat_area->insertPlainText("\n");
 	switch(msg_type) {
 		case SSHOUT_API_MESSAGE_TYPE_PLAIN:
 			ui->chat_area->insertPlainText(tag + "\n" + QString::fromUtf8(message));
 			break;
 		case SSHOUT_API_MESSAGE_TYPE_RICH:
-			ui->chat_area->insertHtml(tag + QString::fromUtf8(message));
-			//ui->chat_area->append();
+			ui->chat_area->insertPlainText(tag + "\n");
+			ui->chat_area->insertHtml(QString::fromUtf8(message));
 			break;
 		case SSHOUT_API_MESSAGE_TYPE_IMAGE:
 			ui->chat_area->insertPlainText(tag + "\n");
 			print_image(message);
 			break;
 	}
+	apply_chat_area_config();
 	ui->chat_area->append(QString());
 	if(should_scroll) chat_area_scroll_bar->setValue(chat_area_scroll_bar->maximum());
 	ui->chat_area->horizontalScrollBar()->setValue(0);
@@ -412,6 +414,22 @@ void MainWindow::update_user_state(const QString &user, quint8 state) {
 void MainWindow::print_error(quint32 error_code, const QString &error_message) {
 	qDebug("MainWindow::print_error(%u, const QString &)", (unsigned int)error_code);
 	ui->chat_area->appendPlainText(tr("Error from server: %1").arg(error_message) + "\n");
+}
+
+void MainWindow::apply_chat_area_config() {
+#if 0
+	QVariant font_from_config = config->value("Text/DefaultFontFamily");
+	//if(!font.isNull()) ui->chat_area->setCurrentFont(font.value<QFont>());
+	QFont font = font_from_config.isNull() ? ui->chat_area->font() : font_from_config.value<QFont>();
+	int font_size = config->value("Text/DefaultFontSize").toInt();
+	if(font_size) font.setPointSize(font_size);
+	ui->chat_area->setFont(font);
+#else
+	QString font_name = config->value("Text/DefaultFontFamily").toString();
+	if(!font_name.isEmpty()) ui->chat_area->setFontFamily(font_name);
+	int font_size = config->value("Text/DefaultFontSize").toInt();
+	if(font_size > 0) ui->chat_area->setFontPointSize(font_size);
+#endif
 }
 
 void MainWindow::ssh_state_change(SSHClient::SSHState state) {
@@ -633,7 +651,8 @@ void MainWindow::set_send_message_on_enter(bool v) {
 
 void MainWindow::settings() {
 	SettingsDialog d(this, config);
-	d.exec();
+	if(!d.exec()) return;
+	apply_chat_area_config();
 }
 
 void MainWindow::change_server() {
