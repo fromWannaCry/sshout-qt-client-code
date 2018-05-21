@@ -29,12 +29,12 @@
 //#include <QtCore/QDateTime>
 #include <QtCore/QTime>
 #include <QtCore/QBuffer>
-#include <QtGui/QKeyEvent>
-#include <QtGui/QListWidgetItem>
+#include <QKeyEvent>
+#include <QtWidgets/QListWidgetItem>
 //#include <QtGui/QRubberBand>
-#include <QtGui/QImage>
-#include <QtGui/QFileDialog>
-#include <QtGui/QMessageBox>
+#include <QImage>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QMessageBox>
 #include <stdio.h>
 #include <QtCore/QDebug>
 
