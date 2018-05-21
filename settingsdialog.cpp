@@ -57,7 +57,7 @@ SettingsDialog::SettingsDialog(QWidget *parent, QSettings *config) :
 	config->endGroup();
 
 	config->beginGroup("Text");
-#if 0
+#if 1
 	QVariant font = config->value("DefaultFontFamily");
 	if(!font.isNull()) ui->fontComboBox->setCurrentFont(font.value<QFont>());
 #else
@@ -138,8 +138,7 @@ void SettingsDialog::save_settings() {
 	}
 	config->endGroup();
 	config->beginGroup("Text");
-	//config->setValue("DefaultFontFamily", ui->fontComboBox->currentFont());
-	config->setValue("DefaultFontFamily", ui->fontComboBox->currentFont().toString());
+	config->setValue("DefaultFontFamily", ui->fontComboBox->currentFont());
 	config->setValue("DefaultFontSize", ui->spinBox_font_size->value());
 	config->endGroup();
 }

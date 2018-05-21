@@ -417,19 +417,15 @@ void MainWindow::print_error(quint32 error_code, const QString &error_message) {
 }
 
 void MainWindow::apply_chat_area_config() {
-#if 0
+	//qDebug("function: MainWindow::apply_chat_area_config()");
+	//qDebug() << ui->chat_area->currentCharFormat().font() << ui->chat_area->currentCharFormat().fontPointSize();
 	QVariant font_from_config = config->value("Text/DefaultFontFamily");
 	//if(!font.isNull()) ui->chat_area->setCurrentFont(font.value<QFont>());
 	QFont font = font_from_config.isNull() ? ui->chat_area->font() : font_from_config.value<QFont>();
 	int font_size = config->value("Text/DefaultFontSize").toInt();
-	if(font_size) font.setPointSize(font_size);
+	if(font_size > 0) font.setPointSize(font_size);
 	ui->chat_area->setFont(font);
-#else
-	QString font_name = config->value("Text/DefaultFontFamily").toString();
-	if(!font_name.isEmpty()) ui->chat_area->setFontFamily(font_name);
-	int font_size = config->value("Text/DefaultFontSize").toInt();
-	if(font_size > 0) ui->chat_area->setFontPointSize(font_size);
-#endif
+	ui->chat_area->setCurrentCharFormat(QTextCharFormat());
 }
 
 void MainWindow::ssh_state_change(SSHClient::SSHState state) {
