@@ -32,6 +32,8 @@ public:
 	void setenv(const QString &, const QString &);
 	void unsetenv(const QString &);
 	void set_reconnect_interval(int);
+	SSHState state();
+	bool is_connected();
 	bool atEnd() const;
 	qint64 bytesAvailable() const;
 	qint64 bytesToWrite() const;
