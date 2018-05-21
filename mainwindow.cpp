@@ -79,6 +79,12 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 		extern_ssh_client->register_ready_read_stderr_slot(this, SLOT(read_ssh_stderr()));
 		QString args = config->value("SSHArgs").toString();
 		if(!args.isEmpty()) extern_ssh_client->set_extra_args(args.split(' '));
+		config->beginGroup("SSHEnvironment");
+		QStringList key_list = config->allKeys();
+		foreach(const QString &key, key_list) {
+			extern_ssh_client->setenv(key, config->value(key).toString());
+		}
+		config->endGroup();
 	}
 	send_message_on_enter = config->value("UseEnterToSendMessage", true).toBool();
 	ui->action_press_enter_to_send_message->setChecked(send_message_on_enter);
