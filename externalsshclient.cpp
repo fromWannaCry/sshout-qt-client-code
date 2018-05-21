@@ -89,6 +89,26 @@ void ExternalSSHClient::set_reconnect_interval(int v) {
 	reconnect_interval = v;
 }
 
+SSHClient::SSHState ExternalSSHClient::state() {
+	QProcess::ProcessState s = ssh_process->state();
+	switch(s) {
+		case QProcess::NotRunning:
+			return DISCONNECTED;
+		case QProcess::Starting:
+			return CONNECTIING;
+		case QProcess::Running:
+			// Currently not way to check whether the authentication is done
+			return AUTHENTICATED;
+		default:
+			qFatal("QProcess::state returned surprising value %d", s);
+			return DISCONNECTED;
+	}
+}
+
+bool ExternalSSHClient::is_connected() {
+	return ssh_process->state() == QProcess::Running;
+}
+
 bool ExternalSSHClient::atEnd() const {
 	return ssh_process->atEnd();
 }

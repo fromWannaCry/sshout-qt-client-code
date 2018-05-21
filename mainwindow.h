@@ -19,6 +19,7 @@
 #include "sshclient.h"
 
 class QSettings;
+class QDir;
 
 namespace Ui {
 class MainWindow;
@@ -47,8 +48,11 @@ private:
 		int id;
 		QString host_name;
 	};
+	QString create_random_hex_string(int);
+	void print_image(const QByteArray &);
 	void print_message(const QTime &t, const QString &, const QString &, quint8, const QByteArray &);
 	void send_hello();
+	void send_message(const QString &, quint8, const QByteArray &);
 	void save_ui_layout();
 	void add_user_item(const QString &, QList<UserIdAndHostName> *);
 	void remove_offline_user_items(const QSet<QString> &);
@@ -67,6 +71,8 @@ private:
 	bool ignore_key_event;
 	bool need_reconnect;
 	QTimer *timer;
+	//QTemporaryFile *cache_file_allocator;
+	QDir *cache_dir;
 
 private slots:
 	void connect_ssh();

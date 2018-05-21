@@ -29,14 +29,23 @@
 //#include <QtCore/QDateTime>
 #include <QtCore/QTime>
 #include <QtCore/QBuffer>
+<<<<<<< HEAD
 #include <QKeyEvent>
 #include <QtWidgets/QListWidgetItem>
+=======
+#include <QtCore/QTemporaryFile>
+#include <QtCore/QUrl>
+#include <QtGui/QKeyEvent>
+#include <QtGui/QListWidgetItem>
+>>>>>>> a5327703532a0294d0a270b61c4981644fd21ddb
 //#include <QtGui/QRubberBand>
 #include <QImage>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
 #include <stdio.h>
 #include <QtCore/QDebug>
+
+extern QString config_dir();
 
 MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, quint16 port, const QString &identify_file) :
 	QMainWindow(parent),
@@ -86,6 +95,13 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	timer = new QTimer(this);
 	timer->setInterval(60000);
 	connect(timer, SIGNAL(timeout()), SLOT(send_request_online_users()));
+	//cache_file_allocator = new QTemporaryFile(this);
+	//cache_file_allocator->setAutoRemove(false);
+	cache_dir = new QDir(QString("%1/cache/%2").arg(config_dir()).arg(host));
+	if(!cache_dir->mkpath(".")) {
+		qWarning("Cannot create cache directory");
+		QMessageBox::warning(this, QString(), tr("Failed to create cache directory '%1'").arg(cache_dir->path()));
+	}
 	connect_ssh();
 }
 
@@ -166,6 +182,62 @@ void MainWindow::connect_ssh() {
 	}
 }
 
+QString MainWindow::create_random_hex_string(int len) {
+	//char buffer[len * 2];
+	QByteArray buffer;
+	//buffer.resize(len * 2);
+	//int i = 0;
+	//while(i < len) {
+	while(len-- > 0) {
+		//QString::number(qrand() & 0xff, 0x10);
+		char n = qrand() & 0xff;
+		buffer.append(QByteArray(&n, 1).toHex());
+	}
+	return QString::fromLatin1(buffer);
+}
+
+void MainWindow::print_image(const QByteArray &data) {
+	QImage image;
+	if(!image.loadFromData(data, "JPEG")) {
+		ui->chat_area->append(tr("[Failed to load image]"));
+		return;
+	}
+
+#if 0
+	QString file_name = create_random_hex_string(16) + ".jpg";
+	//image.save(QString("%1/%2").arg(config_dir()).arg(file_na))
+	QUrl url(cache_dir->filePath(file_name));
+#if 0
+	if(!image.save(url.toString(QUrl::RemoveScheme))) {
+#else
+	QFile image_file(url.toString(QUrl.RemoveScheme));
+	if(image_file.open(QIODevice::WriteOnly)) {
+#endif
+		ui->chat_area->append(tr("[Failed to save image]"));
+		return;
+	}
+#else
+	QString image_file_name;
+	QFile image_file;
+	do {
+		image_file_name = create_random_hex_string(16) + ".jpg";
+		image_file.setFileName(cache_dir->filePath(image_file_name));
+	} while(image_file.exists());
+	if(image_file.open(QIODevice::WriteOnly)) {
+		ui->chat_area->append(tr("[Failed to save image, %1]").arg(image_file.errorString()));
+		return;
+	}
+	if(image_file.write(data) < data.length()) {
+		ui->chat_area->append(tr("[File %1 short write]").arg(image_file_name));
+		image_file.close();
+		return;
+	}
+	QUrl url(image_file.fileName());
+#endif
+	QTextDocument *doc = ui->chat_area->document();
+	doc->addResource(QTextDocument::ImageResource, url, image);
+}
+
 void MainWindow::print_message(const QTime &time, const QString &msg_from, const QString &msg_to, quint8 msg_type, const QByteArray &message) {
 	//QDateTime dt = QDateTime::currentDateTime();
 	//QTime t = QTime::currentTime();
@@ -182,6 +254,8 @@ void MainWindow::print_message(const QTime &time, const QString &msg_from, const
 			ui->chat_area->insertHtml(tag + QString::fromUtf8(message));
 			break;
 		case SSHOUT_API_MESSAGE_TYPE_IMAGE:
+			ui->chat_area->append(tag);
+			print_image(message);
 			break;
 	}
 	ui->chat_area->append(QString());
@@ -198,6 +272,30 @@ void MainWindow::send_hello() {
 	//ssh_client->write("Test");
 }
 
+void MainWindow::send_message(const QString &to_user, quint8 message_type, const QByteArray &message) {
+	if(!ssh_client->is_connected()) {
+		ui->statusbar->showMessage(tr("Cannot send message, server is not connected"));
+		return;
+	}
+	QByteArray to_user_bytes = to_user.toUtf8();
+	if(to_user_bytes.length() > 32) {
+		qWarning("MainWindow::send_message: user name too long");
+		return;
+	}
+	quint8 to_user_len = to_user_bytes.length();
+	quint32 message_len = message.length();
+	quint32 packet_length = 1 + 1 + to_user_len + 1 + 4 + message_len;
+	quint8 packet_type = SSHOUT_API_SEND_MESSAGE;
+	*data_stream << packet_length;
+	*data_stream << packet_type;
+	*data_stream << to_user_len;
+	data_stream->writeRawData(to_user_bytes.data(), to_user_len);
+	*data_stream << message_type;
+	*data_stream << message_len;
+	data_stream->writeRawData(message.data(), message_len);
+
+}
+
 void MainWindow::send_message() {
 	qDebug("slot: MainWindow::send_message()");
 	bool use_html = ui->action_use_html_for_sending_messages->isChecked();
@@ -205,24 +303,13 @@ void MainWindow::send_message() {
 	if(message.isEmpty()) return;
 
 	QByteArray message_bytes = message.toUtf8();
-	quint32 message_len = message_bytes.length();
+
+	ui->statusbar->showMessage(tr("Sending message"), 1000);
+	// TODO: get user name from current selection of user list
 	//QString ui->listWidget_online_users->currentItem()
-	QByteArray to_user("GLOBAL");
-	quint8 to_user_len = to_user.length();
-	quint8 message_type = use_html ? SSHOUT_API_MESSAGE_TYPE_RICH : SSHOUT_API_MESSAGE_TYPE_PLAIN;
-	quint32 packet_length = 1 + 1 + to_user_len + 1 + 4 + message_len;
-	quint8 packet_type = SSHOUT_API_SEND_MESSAGE;
-	//quint8 packet_type = 99;
-	*data_stream << packet_length;
-	*data_stream << packet_type;
-	*data_stream << to_user_len;
-	data_stream->writeRawData(to_user.data(), to_user_len);
-	*data_stream << message_type;
-	*data_stream << message_len;
-	data_stream->writeRawData(message_bytes.data(), message_len);
+	send_message("GLOBAL", use_html ? SSHOUT_API_MESSAGE_TYPE_RICH : SSHOUT_API_MESSAGE_TYPE_PLAIN, message_bytes);
 
 	ui->textEdit_message_to_send->clear();
-	ui->statusbar->showMessage(tr("Sending message"), 1000);
 }
 
 void MainWindow::add_user_item(const QString &user_name, QList<UserIdAndHostName> *logins) {
@@ -539,18 +626,6 @@ void MainWindow::send_image() {
 			return;
 		}
 		buffer.close();
-		QByteArray to_user("GLOBAL");
-		quint8 to_user_len = to_user.length();
-		quint8 message_type = SSHOUT_API_MESSAGE_TYPE_IMAGE;
-		quint32 message_len = data.length();
-		quint32 packet_length = 1 + 1 + to_user_len + 1 + 4 + message_len;
-		quint8 packet_type = SSHOUT_API_SEND_MESSAGE;
-		*data_stream << packet_length;
-		*data_stream << packet_type;
-		*data_stream << to_user_len;
-		data_stream->writeRawData(to_user.data(), to_user_len);
-		*data_stream << message_type;
-		*data_stream << message_len;
-		data_stream->writeRawData(data.data(), message_len);
+		send_message("GLOBAL", SSHOUT_API_MESSAGE_TYPE_IMAGE, data);
 	}
 }
