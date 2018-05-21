@@ -524,7 +524,8 @@ void MainWindow::send_image() {
 	d.setFileMode(QFileDialog::ExistingFile);
 	d.setOption(QFileDialog::DontUseNativeDialog);
 	if(d.exec()) {
-		const QString &path = d.selectedFiles()[0];
+		QString path = d.selectedFiles()[0];
+		qDebug() << path;
 		QImage image(path);
 		if(image.isNull()) {
 			QMessageBox::critical(this, QString(), tr("Cannot load file '%1' as an image").arg(path));
