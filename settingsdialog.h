@@ -15,7 +15,11 @@
 #ifndef SETTINGSDIALOG_H
 #define SETTINGSDIALOG_H
 
+#if QT_VERSION < 0x050000
+#include <QtGui/QDialog>
+#else
 #include <QtWidgets/QDialog>
+#endif
 
 class QSettings;
 

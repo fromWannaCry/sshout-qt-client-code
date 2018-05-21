@@ -1,8 +1,8 @@
 #ifndef SERVERINFORMATION_H
 #define SERVERINFORMATION_H
 
-#include <QtCore/QDataStream>
 #include <QtCore/qglobal.h>
+#include <QtCore/QDataStream>
 #include <QtCore/QMetaType>
 #include <QtCore/QString>
 //class QString;

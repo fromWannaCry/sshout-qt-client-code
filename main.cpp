@@ -20,8 +20,11 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <time.h>
-// TODO: Use '#if QT_VERSION < 0x050000' to check Qt 5
+#if QT_VERSION < 0x050000
+#include <QtGui/QApplication>
+#else
 #include <QtWidgets/QApplication>
+#endif
 #include <QtCore/QSettings>
 #include <QtCore/QUrl>
 //#include <QtCore/QTextCodec>

@@ -17,13 +17,19 @@
 #include "serverinformation.h"
 #include "settingsdialog.h"
 #include "mainwindow.h"
+#if QT_VERSION < 0x050000
+#include <QtGui/QCompleter>
+#include <QtGui/QFileDialog>
+#include <QtGui/QMessageBox>
+#else
 #include <QtWidgets/QCompleter>
 #include <QtWidgets/QFileDialog>
+#include <QtWidgets/QMessageBox>
+#endif
 #include <QtCore/QFile>
 #include <QtCore/QDir>
 #include <QtCore/QSettings>
 #include <QtCore/QList>
-#include <QtWidgets/QMessageBox>
 #include <QtCore/QDebug>
 
 ConnectionWindow::ConnectionWindow(QWidget *parent, QSettings *config) :

@@ -15,8 +15,12 @@
 #ifndef CONNECTIONWINDOW_H
 #define CONNECTIONWINDOW_H
 
+#if QT_VERSION < 0x050000
+#include <QtGui/QDialog>
+#else
 #include <QtWidgets/QDialog>
-#include <QSettings>
+#endif
+#include <QtCore/QSettings>
 //class QSettings;
 
 namespace Ui {

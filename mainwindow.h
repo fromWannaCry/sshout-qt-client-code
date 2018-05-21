@@ -15,7 +15,12 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QtCore/qglobal.h>
+#if QT_VERSION < 0x050000
+#include <QtGui/QMainWindow>
+#else
 #include <QtWidgets/QMainWindow>
+#endif
 #include "sshclient.h"
 
 class QSettings;

@@ -29,19 +29,21 @@
 //#include <QtCore/QDateTime>
 #include <QtCore/QTime>
 #include <QtCore/QBuffer>
-<<<<<<< HEAD
-#include <QKeyEvent>
-#include <QtWidgets/QListWidgetItem>
-=======
-#include <QtCore/QTemporaryFile>
-#include <QtCore/QUrl>
+#if QT_VERSION < 0x050000
 #include <QtGui/QKeyEvent>
 #include <QtGui/QListWidgetItem>
->>>>>>> a5327703532a0294d0a270b61c4981644fd21ddb
-//#include <QtGui/QRubberBand>
-#include <QImage>
+#include <QtGui/QFileDialog>
+#include <QtGui/QMessageBox>
+#include <QtGui/QImage>
+#else
+#include <QtWidgets/QListWidgetItem>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
+#include <QtWidgets/QImage>
+#endif
+#include <QtCore/QTemporaryFile>
+#include <QtCore/QUrl>
+//#include <QtGui/QRubberBand>
 #include <stdio.h>
 #include <QtCore/QDebug>
 
