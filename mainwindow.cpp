@@ -48,6 +48,8 @@
 #include <stdio.h>
 #include <QtCore/QDebug>
 
+#define appendPlainText append
+
 extern QString config_dir();
 
 MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, quint16 port, const QString &identify_file) :
@@ -202,7 +204,7 @@ QString MainWindow::create_random_hex_string(int len) {
 void MainWindow::print_image(const QByteArray &data) {
 	QImage image;
 	if(!image.loadFromData(data, "JPEG")) {
-		ui->chat_area->appendPlainText(tr("[Failed to load image]"));
+		ui->chat_area->appendPlainText(tr("[Failed to load image]") + "\n");
 		return;
 	}
 
@@ -235,10 +237,21 @@ void MainWindow::print_image(const QByteArray &data) {
 		image_file.close();
 		return;
 	}
+	image_file.close();
 	QUrl url(image_file.fileName());
+	url.setScheme("file");
+	qDebug() << url;
 #endif
 	QTextDocument *doc = ui->chat_area->document();
 	doc->addResource(QTextDocument::ImageResource, url, image);
+	QTextCursor cursor = ui->chat_area->textCursor();
+	//cursor.insertImage(image);
+	QTextImageFormat image_format;
+	image_format.setWidth(image.width());
+	image_format.setHeight(image.height());
+	image_format.setName(url.toString());
+	cursor.insertImage(image_format);
+	ui->chat_area->setTextCursor(cursor);
 }
 
 void MainWindow::print_message(const QTime &time, const QString &msg_from, const QString &msg_to, quint8 msg_type, const QByteArray &message) {
@@ -251,21 +264,24 @@ void MainWindow::print_message(const QTime &time, const QString &msg_from, const
 	qDebug() << tag;
 	QScrollBar *chat_area_scroll_bar = ui->chat_area->verticalScrollBar();
 	bool should_scroll = chat_area_scroll_bar->value() >= chat_area_scroll_bar->maximum();
-	ui->chat_area->appendPlainText(QString());
+	//ui->chat_area->append(QString());
+	ui->chat_area->insertPlainText("\n");
 	switch(msg_type) {
 		case SSHOUT_API_MESSAGE_TYPE_PLAIN:
-			ui->chat_area->appendPlainText(tag + "\n" + QString::fromUtf8(message));
+			ui->chat_area->insertPlainText(tag + "\n" + QString::fromUtf8(message));
 			break;
 		case SSHOUT_API_MESSAGE_TYPE_RICH:
-			ui->chat_area->appendHtml(tag + QString::fromUtf8(message));
+			ui->chat_area->insertHtml(tag + QString::fromUtf8(message));
 			//ui->chat_area->append();
 			break;
 		case SSHOUT_API_MESSAGE_TYPE_IMAGE:
-			ui->chat_area->appendPlainText(tag);
+			ui->chat_area->insertPlainText(tag + "\n");
 			print_image(message);
 			break;
 	}
+	ui->chat_area->append(QString());
 	if(should_scroll) chat_area_scroll_bar->setValue(chat_area_scroll_bar->maximum());
+	ui->chat_area->horizontalScrollBar()->setValue(0);
 }
 
 void MainWindow::send_hello() {
@@ -366,7 +382,7 @@ void MainWindow::send_request_online_users() {
 }
 
 void MainWindow::update_user_state(const QString &user, quint8 state) {
-	ui->chat_area->appendPlainText(tr("%1 is %2").arg(user).arg(state ? tr("joined") : tr("leave")));
+	ui->chat_area->appendPlainText(tr("%1 is %2\n").arg(user).arg(state ? tr("joined") : tr("leave")));
 	if(state) {
 		send_request_online_users();
 		timer->start();
@@ -382,7 +398,7 @@ void MainWindow::update_user_state(const QString &user, quint8 state) {
 
 void MainWindow::print_error(quint32 error_code, const QString &error_message) {
 	qDebug("MainWindow::print_error(%u, const QString &)", (unsigned int)error_code);
-	ui->chat_area->appendPlainText(tr("Error from server: %1").arg(error_message));
+	ui->chat_area->appendPlainText(tr("Error from server: %1").arg(error_message) + "\n");
 }
 
 void MainWindow::ssh_state_change(SSHClient::SSHState state) {
@@ -571,8 +587,12 @@ void MainWindow::read_ssh() {
 					ssh_client->disconnect();
 					return;
 				}
-				if(data[5 + length - 1] == '\n') length--;
-				ui->chat_area->appendPlainText(QString::fromUtf8(data.mid(5, length)));
+				//if(data[5 + length - 1] == '\n') length--;
+				if(data[5 + length - 1] != '\n') {
+					data.append('\n');
+					length++;
+				}
+				ui->chat_area->append(QString::fromUtf8(data.mid(5, length)));
 				break;
 		}
 	}
