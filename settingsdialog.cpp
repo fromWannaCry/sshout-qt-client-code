@@ -16,8 +16,8 @@
 #include "settingsdialog.h"
 #include "ui_settingsdialog.h"
 #include <QtCore/QSettings>
-#include <QtGui/QFileDialog>
-#include <QtGui/QMessageBox>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QMessageBox>
 
 SettingsDialog::SettingsDialog(QWidget *parent, QSettings *config) :
 	QDialog(parent),

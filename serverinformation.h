@@ -1,10 +1,11 @@
 #ifndef SERVERINFORMATION_H
 #define SERVERINFORMATION_H
 
+#include <QtCore/QDataStream>
 #include <QtCore/qglobal.h>
 #include <QtCore/QMetaType>
-
-class QString;
+#include <QtCore/QString>
+//class QString;
 
 struct ServerInformation {
 	QString host;

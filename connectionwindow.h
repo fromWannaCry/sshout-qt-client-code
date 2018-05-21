@@ -15,9 +15,9 @@
 #ifndef CONNECTIONWINDOW_H
 #define CONNECTIONWINDOW_H
 
-#include <QtGui/QDialog>
-
-class QSettings;
+#include <QtWidgets/QDialog>
+#include <QSettings>
+//class QSettings;
 
 namespace Ui {
 class ConnectionWindow;

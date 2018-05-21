@@ -17,13 +17,13 @@
 #include "serverinformation.h"
 #include "settingsdialog.h"
 #include "mainwindow.h"
-#include <QtGui/QCompleter>
-#include <QtGui/QFileDialog>
+#include <QtWidgets/QCompleter>
+#include <QtWidgets/QFileDialog>
 #include <QtCore/QFile>
 #include <QtCore/QDir>
 #include <QtCore/QSettings>
 #include <QtCore/QList>
-#include <QtGui/QMessageBox>
+#include <QtWidgets/QMessageBox>
 #include <QtCore/QDebug>
 
 ConnectionWindow::ConnectionWindow(QWidget *parent, QSettings *config) :
