@@ -45,7 +45,7 @@ bool ExternalSSHClient::connect(const QString &host, quint16 port, const QString
 	}
 	ssh_process->setEnvironment(environment.toList());
 	ssh_args.clear();
-	ssh_args << "-o" << "BatchMode=yes";
+	//ssh_args << "-o" << "BatchMode=yes";
 	ssh_args << "-o" << "ServerAliveInterval=60";
 	ssh_args << host;
 	ssh_args << "-p" << QString::number(port);
