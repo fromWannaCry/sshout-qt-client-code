@@ -36,6 +36,7 @@
 #include <QtGui/QMessageBox>
 #include <QtGui/QImage>
 #include <QtGui/QScrollBar>
+#include <QtGui/QDesktopServices>
 #else
 #include <QtWidgets/QListWidgetItem>
 #include <QtWidgets/QFileDialog>
@@ -89,6 +90,10 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	bool show_user_list = config->value("ShowUserList", true).toBool();
 	ui->dockWidget_online_list->setVisible(show_user_list);
 	ui->action_show_online_users->setChecked(show_user_list);
+	if(show_user_list) {
+		QVariant v = config->value("UserListWindowSize");
+		if(!v.isNull()) ui->dockWidget_online_list->resize(v.toSize());
+	}
 	if(config->value("WindowMaximized", false).toBool()) showMaximized();
 	else {
 		QVariant v = config->value("WindowSize");
@@ -169,9 +174,13 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 }
 
 void MainWindow::save_ui_layout() {
-	config->setValue("ShowUserList", ui->dockWidget_online_list->isVisible());
+	bool show_user_list = ui->dockWidget_online_list->isVisible();
+	config->setValue("ShowUserList", show_user_list);
 	if(isMaximized()) config->setValue("WindowMaximized", true);
 	else config->setValue("WindowSize", size());
+	if(show_user_list) {
+		config->setValue("UserListWindowSize", ui->dockWidget_online_list->size());
+	}
 }
 
 void MainWindow::closeEvent(QCloseEvent *e) {
@@ -250,6 +259,7 @@ void MainWindow::print_image(const QByteArray &data) {
 	image_format.setWidth(image.width());
 	image_format.setHeight(image.height());
 	image_format.setName(url.toString());
+	cursor.movePosition(QTextCursor::End);
 	cursor.insertImage(image_format);
 	ui->chat_area->setTextCursor(cursor);
 }
@@ -265,6 +275,9 @@ void MainWindow::print_message(const QTime &time, const QString &msg_from, const
 	QScrollBar *chat_area_scroll_bar = ui->chat_area->verticalScrollBar();
 	bool should_scroll = chat_area_scroll_bar->value() >= chat_area_scroll_bar->maximum();
 	//ui->chat_area->append(QString());
+	QTextCursor cursor = ui->textEdit_message_to_send->textCursor();
+	cursor.movePosition(QTextCursor::End);
+	ui->textEdit_message_to_send->setTextCursor(cursor);
 	ui->chat_area->insertPlainText("\n");
 	switch(msg_type) {
 		case SSHOUT_API_MESSAGE_TYPE_PLAIN:
@@ -656,4 +669,17 @@ void MainWindow::send_image() {
 		buffer.close();
 		send_message("GLOBAL", SSHOUT_API_MESSAGE_TYPE_IMAGE, data);
 	}
+}
+
+void MainWindow::open_project_page() {
+	QDesktopServices::openUrl(QUrl(PROJECT_PAGE_URL));
+}
+
+void MainWindow::show_about() {
+	QMessageBox d(this);
+	d.setWindowTitle(tr("About"));
+	d.setText("<h3>Secure Shout Host Oriented Unified Talk</h3>Copyright 2018 Rivoreo<br/><br/>" +
+		tr("This program is free software; you are free to change and redistribute it; see the source for copying conditions.") + "<br/>" +
+		tr("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."));
+	d.exec();
 }

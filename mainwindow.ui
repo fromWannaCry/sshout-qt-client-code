@@ -73,15 +73,23 @@
     <addaction name="action_use_html_for_sending_messages"/>
     <addaction name="action_settings"/>
    </widget>
-   <widget class="QMenu" name="menu_View">
+   <widget class="QMenu" name="menu_view">
     <property name="title">
      <string>&amp;View</string>
     </property>
     <addaction name="action_show_online_users"/>
    </widget>
+   <widget class="QMenu" name="menu_help">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="action_project_page"/>
+    <addaction name="action_about"/>
+   </widget>
    <addaction name="menu_server"/>
    <addaction name="menu_edit"/>
-   <addaction name="menu_View"/>
+   <addaction name="menu_view"/>
+   <addaction name="menu_help"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dockWidget_online_list">
@@ -148,7 +156,7 @@
    <property name="text">
     <string>&amp;Change server</string>
    </property>
-   <property name="toolTip">
+   <property name="statusTip">
     <string>Logout and choose another server</string>
    </property>
   </action>
@@ -156,7 +164,7 @@
    <property name="text">
     <string>&amp;Logout</string>
    </property>
-   <property name="toolTip">
+   <property name="statusTip">
     <string>Logout and exit</string>
    </property>
   </action>
@@ -187,6 +195,19 @@
   <action name="action_send_image">
    <property name="text">
     <string>Send Image...</string>
+   </property>
+  </action>
+  <action name="action_project_page">
+   <property name="text">
+    <string>&amp;Project page...</string>
+   </property>
+   <property name="statusTip">
+    <string>Finding new versions, reporting bugs and gettings the source</string>
+   </property>
+  </action>
+  <action name="action_about">
+   <property name="text">
+    <string>&amp;About...</string>
    </property>
   </action>
  </widget>
@@ -320,6 +341,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>action_about</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>show_about()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>201</x>
+     <y>191</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>action_project_page</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>open_project_page()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>201</x>
+     <y>191</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>set_send_message_on_enter(bool)</slot>
@@ -328,5 +381,7 @@
   <slot>change_server()</slot>
   <slot>set_use_html(bool)</slot>
   <slot>send_image()</slot>
+  <slot>show_about()</slot>
+  <slot>open_project_page()</slot>
  </slots>
 </ui>

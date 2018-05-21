@@ -94,6 +94,8 @@ private slots:
 	void send_request_online_users();
 	void set_use_html(bool);
 	void send_image();
+	void open_project_page();
+	void show_about();
 };
 
 #endif // MAINWINDOW_H

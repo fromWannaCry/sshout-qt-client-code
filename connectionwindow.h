@@ -15,6 +15,7 @@
 #ifndef CONNECTIONWINDOW_H
 #define CONNECTIONWINDOW_H
 
+#include <QtCore/qglobal.h>
 #if QT_VERSION < 0x050000
 #include <QtGui/QDialog>
 #else
