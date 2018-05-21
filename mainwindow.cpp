@@ -218,7 +218,7 @@ void MainWindow::print_image(const QByteArray &data) {
 		image_file_name = create_random_hex_string(16) + ".jpg";
 		image_file.setFileName(cache_dir->filePath(image_file_name));
 	} while(image_file.exists());
-	if(image_file.open(QIODevice::WriteOnly)) {
+	if(!image_file.open(QIODevice::WriteOnly)) {
 		ui->chat_area->append(tr("[Failed to save image, %1]").arg(image_file.errorString()));
 		return;
 	}

@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <time.h>
 // TODO: Use '#if QT_VERSION < 0x050000' to check Qt 5
 #include <QtGui/QApplication>
 #include <QtCore/QSettings>
@@ -104,6 +105,7 @@ int main(int argc, char *argv[]) {
 		print_usage(argv[0]);
 		return -1;
 	}
+	qsrand(time(NULL));
 	if(argc - optind == 1) {
 		QString host;
 		char *maybe_url = argv[optind];
