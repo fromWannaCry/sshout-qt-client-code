@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
-     <widget class="QTextEdit" name="chat_area">
+     <widget class="QPlainTextEdit" name="chat_area">
       <property name="readOnly">
        <bool>true</bool>
       </property>

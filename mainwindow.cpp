@@ -35,6 +35,7 @@
 #include <QtGui/QFileDialog>
 #include <QtGui/QMessageBox>
 #include <QtGui/QImage>
+#include <QtGui/QScrollBar>
 #else
 #include <QtWidgets/QListWidgetItem>
 #include <QtWidgets/QFileDialog>
@@ -201,7 +202,7 @@ QString MainWindow::create_random_hex_string(int len) {
 void MainWindow::print_image(const QByteArray &data) {
 	QImage image;
 	if(!image.loadFromData(data, "JPEG")) {
-		ui->chat_area->append(tr("[Failed to load image]"));
+		ui->chat_area->appendPlainText(tr("[Failed to load image]"));
 		return;
 	}
 
@@ -215,7 +216,7 @@ void MainWindow::print_image(const QByteArray &data) {
 	QFile image_file(url.toString(QUrl.RemoveScheme));
 	if(image_file.open(QIODevice::WriteOnly)) {
 #endif
-		ui->chat_area->append(tr("[Failed to save image]"));
+		ui->chat_area->appendPlainText(tr("[Failed to save image]"));
 		return;
 	}
 #else
@@ -226,11 +227,11 @@ void MainWindow::print_image(const QByteArray &data) {
 		image_file.setFileName(cache_dir->filePath(image_file_name));
 	} while(image_file.exists());
 	if(!image_file.open(QIODevice::WriteOnly)) {
-		ui->chat_area->append(tr("[Failed to save image, %1]").arg(image_file.errorString()));
+		ui->chat_area->appendPlainText(tr("[Failed to save image, %1]").arg(image_file.errorString()));
 		return;
 	}
 	if(image_file.write(data) < data.length()) {
-		ui->chat_area->append(tr("[File %1 short write]").arg(image_file_name));
+		ui->chat_area->appendPlainText(tr("[File %1 short write]").arg(image_file_name));
 		image_file.close();
 		return;
 	}
@@ -248,19 +249,23 @@ void MainWindow::print_message(const QTime &time, const QString &msg_from, const
 		tr("%1 to %2 %3").arg(msg_from).arg(msg_to).arg(time.toString("H:mm:ss"));
 	qDebug() << QString::fromUtf8(message);
 	qDebug() << tag;
+	QScrollBar *chat_area_scroll_bar = ui->chat_area->verticalScrollBar();
+	bool should_scroll = chat_area_scroll_bar->value() >= chat_area_scroll_bar->maximum();
+	ui->chat_area->appendPlainText(QString());
 	switch(msg_type) {
 		case SSHOUT_API_MESSAGE_TYPE_PLAIN:
-			ui->chat_area->append(tag + "\n" + QString::fromUtf8(message));
+			ui->chat_area->appendPlainText(tag + "\n" + QString::fromUtf8(message));
 			break;
 		case SSHOUT_API_MESSAGE_TYPE_RICH:
-			ui->chat_area->insertHtml(tag + QString::fromUtf8(message));
+			ui->chat_area->appendHtml(tag + QString::fromUtf8(message));
+			//ui->chat_area->append();
 			break;
 		case SSHOUT_API_MESSAGE_TYPE_IMAGE:
-			ui->chat_area->append(tag);
+			ui->chat_area->appendPlainText(tag);
 			print_image(message);
 			break;
 	}
-	ui->chat_area->append(QString());
+	if(should_scroll) chat_area_scroll_bar->setValue(chat_area_scroll_bar->maximum());
 }
 
 void MainWindow::send_hello() {
@@ -361,7 +366,7 @@ void MainWindow::send_request_online_users() {
 }
 
 void MainWindow::update_user_state(const QString &user, quint8 state) {
-	ui->chat_area->append(tr("%1 is %2").arg(user).arg(state ? tr("joined") : tr("leave")));
+	ui->chat_area->appendPlainText(tr("%1 is %2").arg(user).arg(state ? tr("joined") : tr("leave")));
 	if(state) {
 		send_request_online_users();
 		timer->start();
@@ -377,7 +382,7 @@ void MainWindow::update_user_state(const QString &user, quint8 state) {
 
 void MainWindow::print_error(quint32 error_code, const QString &error_message) {
 	qDebug("MainWindow::print_error(%u, const QString &)", (unsigned int)error_code);
-	ui->chat_area->append(tr("Error from server: %1").arg(error_message));
+	ui->chat_area->appendPlainText(tr("Error from server: %1").arg(error_message));
 }
 
 void MainWindow::ssh_state_change(SSHClient::SSHState state) {
@@ -439,7 +444,7 @@ void MainWindow::read_ssh() {
 				qDebug("SSHOUT_API_PASS received");
 				if(data.mid(1, 6) != QString("SSHOUT")) {
 					qWarning("Magic mismatch");
-					ui->chat_area->append(tr("Magic mismatch"));
+					ui->chat_area->appendPlainText(tr("Magic mismatch"));
 					need_reconnect = false;
 					ssh_client->disconnect();
 					return;
@@ -449,7 +454,7 @@ void MainWindow::read_ssh() {
 				stream >> version;
 				if(version != 1) {
 					qWarning("Version mismatch (%hu != 1)", version);
-					ui->chat_area->append(tr("Version mismatch (%1 != 1)").arg(version));
+					ui->chat_area->appendPlainText(tr("Version mismatch (%1 != 1)").arg(version));
 					need_reconnect = false;
 					ssh_client->disconnect();
 					return;
@@ -561,12 +566,13 @@ void MainWindow::read_ssh() {
 				qDebug("SSHOUT_API_MOTD received");
 				quint32 length;
 				stream >> length;
-				if((int)length > data.length() - 1 - 4) {
+				if(length > (unsigned int)data.length() - 1 - 4) {
 					qWarning("malformed packet: member size %u out of packet size %d", length, data.length());
 					ssh_client->disconnect();
 					return;
 				}
-				ui->chat_area->append(QString::fromUtf8(data.mid(5, length)) + "\n");
+				if(data[5 + length - 1] == '\n') length--;
+				ui->chat_area->appendPlainText(QString::fromUtf8(data.mid(5, length)));
 				break;
 		}
 	}
