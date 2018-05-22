@@ -124,6 +124,9 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 		qWarning("Cannot create cache directory");
 		QMessageBox::warning(this, QString(), tr("Failed to create cache directory '%1'").arg(cache_dir->path()));
 	}
+	connect(ui->chat_area->verticalScrollBar(), SIGNAL(valueChanged(int)), SLOT(reset_unread_message_count_from_chat_area_vertical_scroll_bar(int)));
+	unread_message_count = 0;
+	update_window_title();
 	apply_chat_area_config();
 	connect_ssh();
 }
@@ -316,6 +319,10 @@ void MainWindow::print_message(const QTime &time, const QString &msg_from, const
 	ui->chat_area->append(QString());
 	if(should_scroll) chat_area_scroll_bar->setValue(chat_area_scroll_bar->maximum());
 	ui->chat_area->horizontalScrollBar()->setValue(0);
+	if(msg_from != my_user_name && (!isActiveWindow() || !should_scroll)) {
+		unread_message_count++;
+		update_window_title();
+	}
 }
 
 void MainWindow::send_hello() {
@@ -398,8 +405,10 @@ void MainWindow::remove_offline_user_items(const QSet<QString> &keep_set) {
 void MainWindow::update_user_list(const UserInfo *users, unsigned int count) {
 	QSet<QString> user_set;
 	QHash<QString, QList<UserIdAndHostName> > user_logins;
+	my_user_name.clear();
 	for(unsigned int i=0; i<count; i++) {
 		const UserInfo *p = users + i;
+		if(my_user_name.isEmpty() && p->id == my_id) my_user_name = p->user_name;
 		user_set << p->user_name;
 		user_logins[p->user_name] << (UserIdAndHostName){ p->id, p->host_name };
 	}
@@ -530,6 +539,7 @@ void MainWindow::read_ssh() {
 				{
 					quint16 my_id;
 					stream >> my_id;
+					this->my_id = my_id;
 					quint16 count;
 					stream >> count;
 					UserInfo users[count];
@@ -775,4 +785,29 @@ void MainWindow::show_chat_area_context_menu(const QPoint &p) {
 	delete menu;
 	//delete current_cursor_in_chat_area;
 	//current_cursor_in_chat_area = NULL;
+}
+
+void MainWindow::update_window_title() {
+	if(unread_message_count) setWindowTitle(QString("[%1] %2 - SSHOUT").arg(unread_message_count).arg(host));
+	else setWindowTitle(QString("%1 - SSHOUT").arg(host));
+}
+
+void MainWindow::reset_unread_message_count() {
+	unread_message_count = 0;
+	update_window_title();
+}
+
+void MainWindow::reset_unread_message_count_from_chat_area_vertical_scroll_bar(int scroll_bar_value) {
+	qDebug("slot: MainWindow::reset_unread_message_count_from_chat_area_vertical_scroll_bar(%d)", scroll_bar_value);
+	if(scroll_bar_value < ui->chat_area->verticalScrollBar()->maximum()) return;
+	if(!isActiveWindow()) return;
+	reset_unread_message_count();
+}
+
+void MainWindow::changeEvent(QEvent *e) {
+	if(e->type() != QEvent::ActivationChange) return;
+	if(!isActiveWindow()) return;
+	QScrollBar *chat_area_scroll_bar = ui->chat_area->verticalScrollBar();
+	if(chat_area_scroll_bar->value() < chat_area_scroll_bar->maximum()) return;
+	reset_unread_message_count();
 }

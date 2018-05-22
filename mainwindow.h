@@ -43,6 +43,8 @@ protected:
 	void keyReleaseEvent(QKeyEvent *);
 	bool eventFilter(QObject *, QEvent *);
 	void closeEvent(QCloseEvent *);
+	void changeEvent(QEvent *);
+	//void focusInEvent(QFocusEvent *);
 
 private:
 	struct UserInfo {
@@ -66,6 +68,8 @@ private:
 	void update_user_state(const QString &, quint8);
 	void print_error(quint32, const QString &);
 	void apply_chat_area_config();
+	void update_window_title();
+	void reset_unread_message_count();
 	Ui::MainWindow *ui;
 	bool use_internal_ssh_library;
 	SSHClient *ssh_client;
@@ -83,6 +87,9 @@ private:
 	QString last_message_html;
 	//QPoint pos_in_chat_area;
 	//QTextCursor *current_cursor_in_chat_area;
+	unsigned int unread_message_count;
+	int my_id;
+	QString my_user_name;
 
 private slots:
 	void connect_ssh();
@@ -104,6 +111,7 @@ private slots:
 	void show_chat_area_context_menu(const QPoint &);
 	//void open_image_from_chat_area();
 	//void copy_link_from_chat_area();
+	void reset_unread_message_count_from_chat_area_vertical_scroll_bar(int);
 };
 
 #endif // MAINWINDOW_H
