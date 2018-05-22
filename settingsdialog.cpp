@@ -20,6 +20,7 @@
 #include <QtGui/QFileDialog>
 #include <QtGui/QMessageBox>
 #include <QtGui/QFont>
+#include <QtGui/QStyleFactory>
 #else
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
@@ -66,6 +67,52 @@ SettingsDialog::SettingsDialog(QWidget *parent, QSettings *config) :
 #endif
 	ui->spinBox_font_size->setValue(config->value("DefaultFontSize", 2).toInt());
 	config->endGroup();
+
+	ui->combo_box_language->setCompleter(NULL);
+	ui->combo_box_language->setEditable(false);
+	ui->combo_box_language->addItem(tr("Default"));
+	ui->combo_box_language->addItem(QString("English (%1)").arg(tr("built-in")), "en");
+	// TODO: find translated messages files
+	QVariant language = config->value("Language");
+	if(!language.isNull()) {
+		int index = ui->combo_box_language->findData(language);
+		if(index > 0) ui->combo_box_language->setCurrentIndex(index);
+	}
+
+	ui->combo_box_style->setCompleter(NULL);
+	ui->combo_box_style->setEditable(false);
+	ui->combo_box_style->addItem(tr("Default"));
+	ui->combo_box_style->addItems(QStyleFactory::keys());
+	QString style = config->value("Style").toString();
+	if(!style.isEmpty()) {
+		int index = ui->combo_box_style->findText(style);
+		if(index != -1) ui->combo_box_style->setCurrentIndex(index);
+	}
+
+	bool show_tray_icon = config->value("ShowTrayIcon", false).toBool();
+	ui->checkBox_show_tray_icon->setChecked(show_tray_icon);
+	ui->checkBox_show_tray_icon->setEnabled(false);	// Not implemented yet
+	if(show_tray_icon) {
+		ui->checkBox_minimize_to_tray->setChecked(config->value("MinimizeToTray", false).toBool());
+	} else {
+		ui->checkBox_minimize_to_tray->setChecked(false);
+		ui->checkBox_minimize_to_tray->setEnabled(false);
+	}
+
+	config->beginGroup("Notification");
+	ui->checkBox_tray_popup->setChecked(config->value("UseTrayPopup", true).toBool());
+	ui->checkBox_tray_popup->setEnabled(show_tray_icon);
+	ui->checkBox_window_alert_notification->setChecked(config->value("UseWindowAlert", false).toBool());
+	ui->checkBox_sound_notification->setChecked(config->value("UseSound", true).toBool());
+	config->endGroup();
+
+	bool override_default_jpeg_quality = config->value("OverrideDefaultJPEGQuality", false).toBool();
+	ui->checkBox_use_custom_jpeg_quality->setChecked(override_default_jpeg_quality);
+	if(override_default_jpeg_quality) {
+		ui->spinBox_jpeg_quality->setValue(config->value("JPEGQuality", 90).toInt());
+	} else {
+		ui->spinBox_jpeg_quality->setEnabled(false);
+	}
 
 	this->config = config;
 }
@@ -145,4 +192,20 @@ void SettingsDialog::save_settings() {
 	config->setValue("DefaultFontFamily", ui->fontComboBox->currentFont());
 	config->setValue("DefaultFontSize", ui->spinBox_font_size->value());
 	config->endGroup();
+	config->setValue("Language", ui->combo_box_language->itemData(ui->combo_box_language->currentIndex()));
+	config->setValue("Style", ui->combo_box_style->currentText());
+	bool show_tray_icon = ui->checkBox_show_tray_icon->isChecked();
+	config->setValue("ShowTrayIcon", show_tray_icon);
+	if(show_tray_icon) config->setValue("MinimizeToTray", ui->checkBox_minimize_to_tray->isChecked());
+	config->beginGroup("Notification");
+	if(show_tray_icon) config->setValue("UseTrayPopup", ui->checkBox_tray_popup->isChecked());
+	config->setValue("UseWindowAlert", ui->checkBox_window_alert_notification->isChecked());
+	config->setValue("UseSound", ui->checkBox_sound_notification->isChecked());
+	config->endGroup();
+
+	bool override_default_jpeg_quality = ui->checkBox_use_custom_jpeg_quality->isChecked();
+	config->setValue("OverrideDefaultJPEGQuality", override_default_jpeg_quality);
+	if(override_default_jpeg_quality) {
+		config->setValue("JPEGQuality", ui->spinBox_jpeg_quality->value());
+	}
 }

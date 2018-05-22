@@ -322,6 +322,9 @@ void MainWindow::print_message(const QTime &time, const QString &msg_from, const
 	if(msg_from != my_user_name && (!isActiveWindow() || !should_scroll)) {
 		unread_message_count++;
 		update_window_title();
+		config->beginGroup("Notification");
+		if(config->value("UseWindowAlert", false).toBool()) QApplication::alert(this);
+		config->endGroup();
 	}
 }
 
@@ -720,7 +723,11 @@ void MainWindow::send_image() {
 		QByteArray data;
 		QBuffer buffer(&data, this);
 		buffer.open(QIODevice::WriteOnly);
-		if(!image.save(&buffer, "JPEG")) {
+		int quality = -1;
+		if(config->value("OverrideDefaultJPEGQuality", false).toBool()) {
+			quality = config->value("JPEGQuality", -1).toInt();
+		}
+		if(!image.save(&buffer, "JPEG", quality)) {
 			QMessageBox::critical(this, QString(), tr("Cannot export the image as JPEG"));
 			return;
 		}

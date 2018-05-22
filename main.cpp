@@ -102,7 +102,9 @@ int main(int argc, char *argv[]) {
 	config.setIniCodec("UTF-8");
 	if(!style) {
 		QString style = config.value("Style").toString();
-		if(!style.isEmpty()) a.setStyle(style);
+		if(!style.isEmpty() && QString::compare(style, QObject::tr("Default"), Qt::CaseInsensitive)) {
+			a.setStyle(style);
+		}
 	}
 	if(argc - optind > 1) {
 		print_usage(argv[0]);

@@ -141,39 +141,125 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_chat">
+     <widget class="QWidget" name="tab_interface">
       <attribute name="title">
-       <string>Text</string>
+       <string>Interface</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label_font">
-         <property name="text">
-          <string>Default font family</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QFontComboBox" name="fontComboBox"/>
-       </item>
+      <layout class="QGridLayout" name="gridLayout_3">
        <item row="1" column="0">
-        <widget class="QLabel" name="label">
+        <widget class="QLabel" name="label_style">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
-          <string>Default font size</string>
+          <string>Style</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
-        <widget class="QSpinBox" name="spinBox_font_size">
-         <property name="minimum">
-          <number>1</number>
-         </property>
-         <property name="maximum">
-          <number>256</number>
-         </property>
-        </widget>
+       <item row="1" column="1" colspan="2">
+        <widget class="QComboBox" name="combo_box_style"/>
        </item>
        <item row="2" column="0" colspan="2">
+        <widget class="QCheckBox" name="checkBox_show_tray_icon">
+         <property name="text">
+          <string>Show &amp;Tray Icon</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0" colspan="3">
+        <widget class="QGroupBox" name="groupBox_notification">
+         <property name="title">
+          <string>Notification</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QCheckBox" name="checkBox_window_alert_notification">
+            <property name="text">
+             <string>&amp;Window Alert</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBox_tray_popup">
+            <property name="text">
+             <string>Tray &amp;Popup</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBox_sound_notification">
+            <property name="text">
+             <string>Play &amp;Sound</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="4" column="0" colspan="3">
+        <widget class="QGroupBox" name="groupBox_text">
+         <property name="title">
+          <string>Text</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_4">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_font">
+            <property name="text">
+             <string>Default font family</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QFontComboBox" name="fontComboBox"/>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Default font size</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QSpinBox" name="spinBox_font_size">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>256</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QCheckBox" name="checkBox_minimize_to_tray">
+         <property name="text">
+          <string>&amp;Hide to Tray when Minimized</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_language">
+         <property name="text">
+          <string>Language</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1" colspan="2">
+        <widget class="QComboBox" name="combo_box_language"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_image">
+      <attribute name="title">
+       <string>Image</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="1" column="0" colspan="2">
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -185,6 +271,20 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="checkBox_use_custom_jpeg_quality">
+         <property name="text">
+          <string>Override default JPEG quality</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QSpinBox" name="spinBox_jpeg_quality">
+         <property name="value">
+          <number>90</number>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -329,6 +429,38 @@
     <hint type="destinationlabel">
      <x>199</x>
      <y>190</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_show_tray_icon</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_tray_popup</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>199</x>
+     <y>94</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>203</x>
+     <y>289</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_use_custom_jpeg_quality</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>spinBox_jpeg_quality</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>150</x>
+     <y>60</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>333</x>
+     <y>61</y>
     </hint>
    </hints>
   </connection>
