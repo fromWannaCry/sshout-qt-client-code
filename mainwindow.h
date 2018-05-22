@@ -82,7 +82,7 @@ private:
 	QDir *cache_dir;
 	QString last_message_html;
 	//QPoint pos_in_chat_area;
-	QTextCursor *current_corsor_in_chat_area;
+	//QTextCursor *current_cursor_in_chat_area;
 
 private slots:
 	void connect_ssh();
@@ -102,7 +102,8 @@ private slots:
 	void open_project_page();
 	void show_about();
 	void show_chat_area_context_menu(const QPoint &);
-	void open_image_from_chat_area();
+	//void open_image_from_chat_area();
+	//void copy_link_from_chat_area();
 };
 
 #endif // MAINWINDOW_H

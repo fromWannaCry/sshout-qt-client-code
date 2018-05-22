@@ -40,7 +40,7 @@
        <item>
         <widget class="QLabel" name="label_message_to">
          <property name="text">
-          <string>Brosdcast Message:</string>
+          <string>Broadcast Message:</string>
          </property>
         </widget>
        </item>
