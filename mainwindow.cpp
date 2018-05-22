@@ -30,19 +30,20 @@
 #include <QtCore/QTime>
 #include <QtCore/QBuffer>
 #include <QtCore/qglobal.h>
+#include <QtGui/QImage>
 #if QT_VERSION < 0x050000
 #include <QtGui/QKeyEvent>
 #include <QtGui/QListWidgetItem>
 #include <QtGui/QFileDialog>
 #include <QtGui/QMessageBox>
-#include <QtGui/QImage>
 #include <QtGui/QScrollBar>
 #include <QtGui/QDesktopServices>
+#include <QtGui/QDialogButtonBox>
+#include <QtGui/QPushButton>
 #else
 #include <QtWidgets/QListWidgetItem>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
-#include <QtGui/QImage>
 #include <QKeyEvent>
 #include <QScrollBar>
 #include <QDesktopServices>
@@ -691,6 +692,19 @@ void MainWindow::send_image() {
 			QMessageBox::critical(this, QString(), tr("Cannot load file '%1' as an image").arg(path));
 			return;
 		}
+		QDialog preview_dialog(this);
+		QVBoxLayout layout(&preview_dialog);
+		QLabel image_label(&preview_dialog);
+		image_label.setPixmap(QPixmap::fromImage(image));
+		layout.addWidget(&image_label);
+		QDialogButtonBox button_box(Qt::Horizontal, &preview_dialog);
+		button_box.addButton(QDialogButtonBox::Ok)->setFocus();
+		button_box.addButton(QDialogButtonBox::Cancel)->setAutoDefault(false);
+		layout.addWidget(&button_box);
+		preview_dialog.setWindowTitle(tr("Preview"));
+		preview_dialog.connect(&button_box, SIGNAL(accepted()), SLOT(accept()));
+		preview_dialog.connect(&button_box, SIGNAL(rejected()), SLOT(reject()));
+		if(!preview_dialog.exec()) return;
 		QByteArray data;
 		QBuffer buffer(&data, this);
 		buffer.open(QIODevice::WriteOnly);
