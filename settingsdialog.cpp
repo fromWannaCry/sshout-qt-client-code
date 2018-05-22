@@ -75,6 +75,10 @@ SettingsDialog::~SettingsDialog()
 	delete ui;
 }
 
+void SettingsDialog::set_current_tab(int index) {
+	ui->tabWidget->setCurrentIndex(index);
+}
+
 void SettingsDialog::use_internal_ssh_library_checked(bool t) {
 	ui->lineEdit_ssh_program->setEnabled(!t);
 	ui->lineEdit_ssh_args->setEnabled(!t);

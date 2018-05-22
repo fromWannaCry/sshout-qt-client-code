@@ -43,7 +43,6 @@
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QImage>
 #endif
-#include <QtCore/QTemporaryFile>
 #include <QtCore/QUrl>
 //#include <QtGui/QRubberBand>
 #include <stdio.h>
@@ -100,11 +99,11 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 		QVariant v = config->value("UserListWindowSize");
 		if(!v.isNull()) ui->dockWidget_online_list->resize(v.toSize());
 	}
-	if(config->value("WindowMaximized", false).toBool()) showMaximized();
-	else {
+	{
 		QVariant v = config->value("WindowSize");
 		if(!v.isNull()) resize(v.toSize());
 	}
+	if(config->value("WindowMaximized", false).toBool()) showMaximized();
 	ui->textEdit_message_to_send->setFocus();
 	data_stream = new QDataStream(ssh_client);
 	//data_stream->setByteOrder(QDataStream::BigEndian);

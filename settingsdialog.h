@@ -33,6 +33,7 @@ class SettingsDialog : public QDialog {
 public:
 	explicit SettingsDialog(QWidget *, QSettings *);
 	~SettingsDialog();
+	void set_current_tab(int);
 	void add_environment_variable(const QString &, const QString &);
 
 private:
