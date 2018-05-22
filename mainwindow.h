@@ -25,6 +25,7 @@
 
 class QSettings;
 class QDir;
+class QTextCursor;
 
 namespace Ui {
 class MainWindow;
@@ -80,6 +81,8 @@ private:
 	//QTemporaryFile *cache_file_allocator;
 	QDir *cache_dir;
 	QString last_message_html;
+	//QPoint pos_in_chat_area;
+	QTextCursor *current_corsor_in_chat_area;
 
 private slots:
 	void connect_ssh();
@@ -98,6 +101,8 @@ private slots:
 	void send_image();
 	void open_project_page();
 	void show_about();
+	void show_chat_area_context_menu(const QPoint &);
+	void open_image_from_chat_area();
 };
 
 #endif // MAINWINDOW_H

@@ -40,6 +40,7 @@
 #include <QtGui/QDesktopServices>
 #include <QtGui/QDialogButtonBox>
 #include <QtGui/QPushButton>
+#include <QtGui/QTextBlock>
 #else
 #include <QtWidgets/QListWidgetItem>
 #include <QtWidgets/QFileDialog>
@@ -728,4 +729,26 @@ void MainWindow::show_about() {
 		tr("This program is free software; you are free to change and redistribute it; see the source for copying conditions.") + "<br/>" +
 		tr("There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."));
 	d.exec();
+}
+
+void MainWindow::show_chat_area_context_menu(const QPoint &p) {
+	qDebug("slot: MainWindow::show_chat_area_context_menu(QPoint(%d, %d))", p.x(), p.y());
+	QMenu *menu = ui->chat_area->createStandardContextMenu(p);
+	current_corsor_in_chat_area = new QTextCursor(ui->chat_area->cursorForPosition(p));
+	if(current_corsor_in_chat_area->block().text() == QString(QChar(0xfffc))) {
+		qDebug("is image");
+		menu->addAction(tr("&Open image"), this, SLOT(open_image_from_chat_area()));
+		//pos_in_chat_area = p;
+	}
+	menu->exec(ui->chat_area->mapToGlobal(p));
+	delete menu;
+	delete current_corsor_in_chat_area;
+	current_corsor_in_chat_area = NULL;
+}
+
+void MainWindow::open_image_from_chat_area() {
+	//if(pos_in_chat_area.isNull()) return;
+	if(!current_corsor_in_chat_area) return;
+	QUrl url(current_corsor_in_chat_area->charFormat().toImageFormat().name());
+	QDesktopServices::openUrl(url);
 }
