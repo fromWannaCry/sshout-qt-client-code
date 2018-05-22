@@ -150,6 +150,13 @@ void MainWindow::keyPressEvent(QKeyEvent *e) {
 			case Qt::Key_Backspace:
 				show_tip = false;
 				break;
+			case Qt::Key_Up:
+				if(ui->textEdit_message_to_send->document()->isEmpty()) {
+					//qDebug("should dup");
+					ui->textEdit_message_to_send->setHtml(last_message_html);
+				}
+				break;
+
 		}
 		if(show_tip) ui->statusbar->showMessage(tr("Press %1 to send").arg(send_message_on_enter ? tr("Enter") : tr("Ctrl-Enter")), 2000);
 	}
@@ -347,6 +354,7 @@ void MainWindow::send_message() {
 	//QString ui->listWidget_online_users->currentItem()
 	send_message("GLOBAL", use_html ? SSHOUT_API_MESSAGE_TYPE_RICH : SSHOUT_API_MESSAGE_TYPE_PLAIN, message_bytes);
 
+	last_message_html = ui->textEdit_message_to_send->toHtml();
 	ui->textEdit_message_to_send->clear();
 }
 

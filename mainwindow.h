@@ -79,6 +79,7 @@ private:
 	QTimer *timer;
 	//QTemporaryFile *cache_file_allocator;
 	QDir *cache_dir;
+	QString last_message_html;
 
 private slots:
 	void connect_ssh();
