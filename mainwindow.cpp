@@ -29,6 +29,7 @@
 //#include <QtCore/QDateTime>
 #include <QtCore/QTime>
 #include <QtCore/QBuffer>
+#include <QtCore/qglobal.h>
 #if QT_VERSION < 0x050000
 #include <QtGui/QKeyEvent>
 #include <QtGui/QListWidgetItem>
@@ -41,7 +42,10 @@
 #include <QtWidgets/QListWidgetItem>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
-#include <QtWidgets/QImage>
+#include <QtGui/QImage>
+#include <QKeyEvent>
+#include <QScrollBar>
+#include <QDesktopServices>
 #endif
 #include <QtCore/QUrl>
 //#include <QtGui/QRubberBand>
