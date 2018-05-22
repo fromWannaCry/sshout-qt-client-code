@@ -31,6 +31,7 @@
 #include <QtCore/QBuffer>
 #include <QtCore/qglobal.h>
 #include <QtGui/QImage>
+#include <QtGui/QClipboard>
 #if QT_VERSION < 0x050000
 #include <QtGui/QKeyEvent>
 #include <QtGui/QListWidgetItem>
@@ -732,18 +733,19 @@ void MainWindow::show_about() {
 }
 
 void MainWindow::show_chat_area_context_menu(const QPoint &p) {
-	qDebug("slot: MainWindow::show_chat_area_context_menu(QPoint(%d, %d))", p.x(), p.y());
+	//qDebug("slot: MainWindow::show_chat_area_context_menu(QPoint(%d, %d))", p.x(), p.y());
 	//QMenu *menu = ui->chat_area->createStandardContextMenu(p);
 	QMenu *menu = new QMenu(this);
 	QAction *open_image_action = NULL;
+	QAction *copy_image_action = NULL;
 	QTextCursor cursor = ui->chat_area->cursorForPosition(p);
 	if(cursor.block().text() == QString(QChar(0xfffc))) {
-		qDebug("is image");
 		//menu->addAction(tr("&Open image"), this, SLOT(open_image_from_chat_area()));
 		//pos_in_chat_area = p;
 		//open_image_action = new QAction(tr("&Open image"), this);
 		//menu->insertAction(NULL, open_image_action);
 		open_image_action = menu->addAction(tr("&Open Image"));
+		copy_image_action = menu->addAction(tr("Copy &Image"));
 	}
 	menu->addAction(tr("&Copy") + "	" + QKeySequence(QKeySequence::Copy).toString(), ui->chat_area, SLOT(copy()))->setEnabled(cursor.hasComplexSelection());
 /*
@@ -753,10 +755,21 @@ void MainWindow::show_chat_area_context_menu(const QPoint &p) {
 */
 	menu->addAction(tr("Select All") + "	" + QKeySequence(QKeySequence::SelectAll).toString(), ui->chat_area, SLOT(selectAll()))->setEnabled(!ui->chat_area->document()->isEmpty());
 	QAction *triggered_action = menu->exec(ui->chat_area->mapToGlobal(p));
-	if(open_image_action && triggered_action == open_image_action) {
-		QUrl url(cursor.charFormat().toImageFormat().name());
-		ui->statusbar->showMessage(tr("Opening %1").arg(url.toString()));
-		QDesktopServices::openUrl(url);
+	if(triggered_action) {
+		if(triggered_action == open_image_action) {
+			QUrl url(cursor.charFormat().toImageFormat().name());
+			ui->statusbar->showMessage(tr("Opening %1").arg(url.toString()));
+			QDesktopServices::openUrl(url);
+		} else if(triggered_action == copy_image_action) {
+			QUrl url(cursor.charFormat().toImageFormat().name());
+			QVariant v = ui->chat_area->document()->resource(QTextDocument::ImageResource, url);
+			if(v.isNull()) {
+				ui->statusbar->showMessage(tr("Failed to copy image: invalid image"));
+			} else {
+				QImage image = v.value<QImage>();
+				QApplication::clipboard()->setImage(image);
+			}
+		}
 	}
 	//delete open_image_action;
 	delete menu;
