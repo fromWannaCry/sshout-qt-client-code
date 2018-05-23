@@ -26,6 +26,7 @@
 class QSettings;
 class QDir;
 class QTextCursor;
+class QListWidgetItem;
 
 namespace Ui {
 class MainWindow;
@@ -37,6 +38,8 @@ class MainWindow : public QMainWindow {
 public:
 	explicit MainWindow(QWidget *, QSettings *, const QString &, quint16, const QString &);
 	~MainWindow();
+
+public slots:
 	void show();
 
 protected:
@@ -114,6 +117,7 @@ private slots:
 	//void open_image_from_chat_area();
 	//void copy_link_from_chat_area();
 	void reset_unread_message_count_from_chat_area_vertical_scroll_bar(int);
+	void show_sessions_of_user(QListWidgetItem *);
 };
 
 #endif // MAINWINDOW_H

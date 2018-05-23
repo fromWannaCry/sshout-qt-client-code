@@ -42,6 +42,7 @@
 #include <QtGui/QDialogButtonBox>
 #include <QtGui/QPushButton>
 #include <QtGui/QTextBlock>
+#include <QtGui/QTreeWidget>
 #else
 #include <QtWidgets/QListWidgetItem>
 #include <QtWidgets/QFileDialog>
@@ -49,6 +50,7 @@
 #include <QKeyEvent>
 #include <QScrollBar>
 #include <QDesktopServices>
+#include <QtWidgets/QTreeWidget>
 #endif
 #include <QtCore/QUrl>
 //#include <QtGui/QRubberBand>
@@ -838,4 +840,41 @@ void MainWindow::changeEvent(QEvent *e) {
 	QScrollBar *chat_area_scroll_bar = ui->chat_area->verticalScrollBar();
 	if(chat_area_scroll_bar->value() < chat_area_scroll_bar->maximum()) return;
 	reset_unread_message_count();
+}
+
+void MainWindow::show_sessions_of_user(QListWidgetItem *item_from_list) {
+	qDebug("slot: MainWindow::show_sessions_of_user(%p)", item_from_list);
+	QList<UserIdAndHostName> *sessions = (QList<UserIdAndHostName> *)item_from_list->data(Qt::UserRole).value<void *>();
+	if(sessions->isEmpty()) {
+		qWarning("MainWindow::show_sessions_of_user: session list empty");
+		return;
+	}
+	//QDialog d;
+	QTreeWidget *tree_widget = new QTreeWidget;
+	tree_widget->setAttribute(Qt::WA_DeleteOnClose);
+	tree_widget->setColumnCount(2);
+	tree_widget->setHeaderLabels(QStringList() << "ID" << "Host");
+	//int height = tree_widget->header()->height();
+	//qDebug("height = %d", height);
+	foreach(const UserIdAndHostName &id_and_host_name, *sessions) {
+		QTreeWidgetItem *item = new QTreeWidgetItem;
+		item->setText(0, QString::number(id_and_host_name.id));
+		item->setText(1, id_and_host_name.host_name);
+		tree_widget->addTopLevelItem(item);
+		qDebug("%d", id_and_host_name.host_name.length());
+		//height += item->sizeHint(0).height();
+	}
+	//qDebug("height = %d", height);
+	//d.exec();
+	tree_widget->setWindowTitle(tr("Active Sessions of User %1").arg(item_from_list->text()));
+	tree_widget->resizeColumnToContents(0);
+	//tree_widget->resizeColumnToContents(1);
+	//int width = tree_widget->columnWidth(0) + tree_widget->columnWidth(1);
+	//qDebug("%d, %d", tree_widget->columnWidth(0), tree_widget->columnWidth(1));
+	tree_widget->setGeometry(x() + (width() - 240) / 2, y() + (height() - 160) / 2, 240, 160);
+	QEventLoop event_loop;
+	connect(tree_widget, SIGNAL(destroyed()), &event_loop, SLOT(quit()));
+	tree_widget->show();
+	event_loop.exec();
+	//qDebug("end of MainWindow::show_sessions_of_user");
 }

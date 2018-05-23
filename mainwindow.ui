@@ -392,6 +392,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>listWidget_online_users</sender>
+   <signal>itemDoubleClicked(QListWidgetItem*)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>show_sessions_of_user(QListWidgetItem*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>293</x>
+     <y>232</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>201</x>
+     <y>191</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>set_send_message_on_enter(bool)</slot>
@@ -403,5 +419,6 @@
   <slot>show_about()</slot>
   <slot>open_project_page()</slot>
   <slot>show_chat_area_context_menu(QPoint)</slot>
+  <slot>show_sessions_of_user(QListWidgetItem*)</slot>
  </slots>
 </ui>
