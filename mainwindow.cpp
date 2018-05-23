@@ -27,12 +27,13 @@
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>
 #include <QtCore/QDataStream>
-//#include <QtCore/QDateTime>
+#include <QtCore/QDateTime>
 #include <QtCore/QTime>
 #include <QtCore/QBuffer>
 #include <QtCore/qglobal.h>
 #include <QtGui/QImage>
 #include <QtGui/QClipboard>
+#include <QtGui/QTextBlock>
 #if QT_VERSION < 0x050000
 #include <QtGui/QKeyEvent>
 #include <QtGui/QListWidgetItem>
@@ -42,7 +43,6 @@
 #include <QtGui/QDesktopServices>
 #include <QtGui/QDialogButtonBox>
 #include <QtGui/QPushButton>
-#include <QtGui/QTextBlock>
 #include <QtGui/QTreeWidget>
 #else
 #include <QtWidgets/QListWidgetItem>
@@ -54,7 +54,6 @@
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QPushButton>
-#include <QtGui/QTextBlock>
 #endif
 #include <QtCore/QUrl>
 //#include <QtGui/QRubberBand>
@@ -138,8 +137,6 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	timer = new QTimer(this);
 	timer->setInterval(60000);
 	connect(timer, SIGNAL(timeout()), SLOT(send_request_online_users()));
-	//cache_file_allocator = new QTemporaryFile(this);
-	//cache_file_allocator->setAutoRemove(false);
 	log_dir = new QDir(QString("%1/logs/%2").arg(config_dir()).arg(host));
 	if(!log_dir->mkpath("images")) {
 		qWarning("Cannot create image cache directory");
@@ -244,6 +241,7 @@ void MainWindow::save_ui_layout() {
 void MainWindow::closeEvent(QCloseEvent *e) {
 	need_reconnect = false;
 	ssh_client->disconnect();
+	message_log->close();
 	if(ready) save_ui_layout();
 	e->accept();
 }
@@ -275,20 +273,6 @@ void MainWindow::print_image(const QByteArray &data, QByteArray &file_name_buffe
 		return;
 	}
 
-#if 0
-	QString file_name = create_random_hex_string(16) + ".jpg";
-	//image.save(QString("%1/%2").arg(config_dir()).arg(file_na))
-	QUrl url(cache_dir->filePath(file_name));
-#if 0
-	if(!image.save(url.toString(QUrl::RemoveScheme))) {
-#else
-	QFile image_file(url.toString(QUrl.RemoveScheme));
-	if(image_file.open(QIODevice::WriteOnly)) {
-#endif
-		ui->chat_area->appendPlainText(tr("[Failed to save image]"));
-		return;
-	}
-#else
 	QString image_file_name;
 	QFile image_file;
 	do {
@@ -308,8 +292,8 @@ void MainWindow::print_image(const QByteArray &data, QByteArray &file_name_buffe
 	file_name_buffer = image_file_name.toUtf8();
 	QUrl url(image_file.fileName());
 	url.setScheme("file");
-	qDebug() << url;
-#endif
+	//qDebug() << url;
+
 	QTextDocument *doc = ui->chat_area->document();
 	doc->addResource(QTextDocument::ImageResource, url, image);
 	QTextCursor cursor = ui->chat_area->textCursor();
@@ -328,11 +312,8 @@ void MainWindow::print_message(const QDateTime &dt, const QString &msg_from, con
 	QString tag = (msg_to.isEmpty() || msg_to == QString("GLOBAL")) ?
 		QString("%1 %2").arg(msg_from).arg(t.toString("H:mm:ss")) :
 		tr("%1 to %2 %3").arg(msg_from).arg(msg_to).arg(t.toString("H:mm:ss"));
-	qDebug() << QString::fromUtf8(message);
-	qDebug() << tag;
 	QScrollBar *chat_area_scroll_bar = ui->chat_area->verticalScrollBar();
 	bool should_scroll = chat_area_scroll_bar->value() >= chat_area_scroll_bar->maximum();
-	//ui->chat_area->append(QString());
 	QTextCursor cursor = ui->chat_area->textCursor();
 	cursor.movePosition(QTextCursor::End);
 	ui->chat_area->setTextCursor(cursor);
@@ -374,7 +355,6 @@ void MainWindow::send_hello() {
 	*data_stream << type;
 	data_stream->writeRawData("SSHOUT", 6);
 	*data_stream << version;
-	//ssh_client->write("Test");
 }
 
 void MainWindow::send_message(const QString &to_user, quint8 message_type, const QByteArray &message) {
@@ -467,7 +447,7 @@ void MainWindow::send_request_online_users() {
 }
 
 void MainWindow::update_user_state(const QString &user, quint8 state) {
-	ui->chat_area->appendPlainText(tr("%1 is %2\n").arg(user).arg(state ? tr("joined") : tr("leave")));
+	ui->chat_area->appendPlainText(tr("%1 is %2\n").arg(user).arg(state ? tr("joined") : tr("left")));
 	if(state) {
 		send_request_online_users();
 		timer->start();
@@ -490,7 +470,6 @@ void MainWindow::apply_chat_area_config() {
 	//qDebug("function: MainWindow::apply_chat_area_config()");
 	//qDebug() << ui->chat_area->currentCharFormat().font() << ui->chat_area->currentCharFormat().fontPointSize();
 	QVariant font_from_config = config->value("Text/DefaultFontFamily");
-	//if(!font.isNull()) ui->chat_area->setCurrentFont(font.value<QFont>());
 	QFont font = font_from_config.isNull() ? ui->chat_area->font() : font_from_config.value<QFont>();
 	int font_size = config->value("Text/DefaultFontSize").toInt();
 	if(font_size > 0) font.setPointSize(font_size);
@@ -520,7 +499,7 @@ void MainWindow::ssh_state_change(SSHClient::SSHState state) {
 }
 
 void MainWindow::read_ssh() {
-	qDebug("slot: MainWindow::read_ssh()");
+	//qDebug("slot: MainWindow::read_ssh()");
 	while(ssh_client->bytesAvailable() > 0) {
 #if 0
 		QByteArray data = sshout_get_packet(ssh_client);
@@ -711,7 +690,7 @@ void MainWindow::read_ssh_stderr() {
 }
 
 void MainWindow::set_send_message_on_enter(bool v) {
-	qDebug("slot: MainWindow::set_send_message_on_enter(%s)", v ? "true" : "false");
+	//qDebug("slot: MainWindow::set_send_message_on_enter(%s)", v ? "true" : "false");
 	send_message_on_enter = v;
 	config->setValue("UseEnterToSendMessage", v);
 }
@@ -869,16 +848,13 @@ void MainWindow::show_sessions_of_user(QListWidgetItem *item_from_list) {
 	tree_widget->setColumnCount(2);
 	tree_widget->setHeaderLabels(QStringList() << "ID" << "Host");
 	//int height = tree_widget->header()->height();
-	//qDebug("height = %d", height);
 	foreach(const UserIdAndHostName &id_and_host_name, *sessions) {
 		QTreeWidgetItem *item = new QTreeWidgetItem;
 		item->setText(0, QString::number(id_and_host_name.id));
 		item->setText(1, id_and_host_name.host_name);
 		tree_widget->addTopLevelItem(item);
 		qDebug("%d", id_and_host_name.host_name.length());
-		//height += item->sizeHint(0).height();
 	}
-	//qDebug("height = %d", height);
 	//tree_widget->setContextMenuPolicy(Qt::CustomContextMenu);
 	//connect(tree_widget, SIGNAL(customContextMenuRequested(QPoint)), SLOT(show_session_list_context_menu(QPoint)));
 	tree_widget->setWindowTitle(tr("Active Sessions of User %1").arg(item_from_list->text()));

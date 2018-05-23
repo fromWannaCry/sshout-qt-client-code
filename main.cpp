@@ -124,11 +124,7 @@ int main(int argc, char *argv[]) {
 		w.show();
 		return a.exec();
 	}
-	//QStringList server_list = config.value("ServerList").toStringList();
 	QList<QVariant> server_list = config.value("ServerList").toList();
-	//QDebug d(QtDebugMsg);
-	//d.operator <<("1");
-	//d << "1";
 	qDebug() << server_list;
 	QWidget *w;
 	if(server_list.isEmpty()) {

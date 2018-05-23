@@ -152,7 +152,6 @@ void ConnectionWindow::start_main_window() {
 		info.identify_file = identify_file;
 		QVariant v = QVariant::fromValue<ServerInformation>(info);
 		server_list << v;
-		//qDebug() << server_list.last().value<ServerInformation>().host;
 		config->setValue("ServerList", server_list);
 	}
 	int index = ui->remote_host_comboBox->currentIndex();
