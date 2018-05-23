@@ -51,6 +51,9 @@
 #include <QScrollBar>
 #include <QDesktopServices>
 #include <QtWidgets/QTreeWidget>
+#include <QtWidgets/QDialogButtonBox>
+#include <QtWidgets/QPushButton>
+#include <QtGui/QTextBlock>
 #endif
 #include <QtCore/QUrl>
 //#include <QtGui/QRubberBand>
