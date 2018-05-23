@@ -74,6 +74,7 @@ ConnectionWindow::ConnectionWindow(QWidget *parent, QSettings *config) :
 	}
 #endif
 	remote_host_name_change_event(ui->remote_host_comboBox->currentText());
+	ui->checkBox_auto_connect->setChecked(config->value("AutoConnect", false).toBool());
 }
 
 ConnectionWindow::~ConnectionWindow()
@@ -156,6 +157,7 @@ void ConnectionWindow::start_main_window() {
 	}
 	int index = ui->remote_host_comboBox->currentIndex();
 	if(index >= 0) config->setValue("LastServerIndex", index);
+	config->setValue("AutoConnect", ui->checkBox_auto_connect->isChecked());
 	hide();
 	MainWindow *w = new MainWindow(NULL, config, host, port, identify_file);
 	w->show();
