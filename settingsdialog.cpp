@@ -24,6 +24,7 @@
 #else
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
+#include<QtWidgets/QStyleFactory>
 #endif
 
 SettingsDialog::SettingsDialog(QWidget *parent, QSettings *config) :
