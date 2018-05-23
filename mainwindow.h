@@ -37,6 +37,7 @@ class MainWindow : public QMainWindow {
 public:
 	explicit MainWindow(QWidget *, QSettings *, const QString &, quint16, const QString &);
 	~MainWindow();
+	void show();
 
 protected:
 	void keyPressEvent(QKeyEvent *);
@@ -90,6 +91,7 @@ private:
 	unsigned int unread_message_count;
 	int my_id;
 	QString my_user_name;
+	bool ready;
 
 private slots:
 	void connect_ssh();

@@ -63,6 +63,7 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	QMainWindow(parent),
 	ui(new Ui::MainWindow)
 {
+	ready = false;
 	ui->setupUi(this);
 	this->config = config;
 	//setMouseTracking(true);
@@ -80,6 +81,20 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	this->port = port;
 	connect(ssh_client, SIGNAL(state_changed(SSHClient::SSHState)), SLOT(ssh_state_change(SSHClient::SSHState)));
 	connect(ssh_client, SIGNAL(readyRead()), SLOT(read_ssh()));
+	if(use_internal_ssh_library || config->value("UseSeparateKnownHosts", false).toBool()) {
+		QStringList known_hosts = config->value("KnownHosts").toStringList();
+		known_hosts.removeAll(QString());
+		if(known_hosts.isEmpty()) {
+			QMessageBox::critical(this, tr("Configuration Error"), use_internal_ssh_library ?
+				tr("Configured to use internal SSH library; but known host list is empty") :
+				tr("Configured to use separate known host list; but that list is empty."));
+			change_server();
+			QMetaObject::invokeMethod(this, "close", Qt::QueuedConnection);
+			return;
+		}
+		known_hosts.removeDuplicates();
+		ssh_client->set_known_hosts(known_hosts);
+	}
 	if(!use_internal_ssh_library) {
 		ExternalSSHClient *extern_ssh_client = (ExternalSSHClient *)ssh_client;
 		extern_ssh_client->register_ready_read_stderr_slot(this, SLOT(read_ssh_stderr()));
@@ -126,6 +141,7 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	}
 	connect(ui->chat_area->verticalScrollBar(), SIGNAL(valueChanged(int)), SLOT(reset_unread_message_count_from_chat_area_vertical_scroll_bar(int)));
 	unread_message_count = 0;
+	ready = true;
 	update_window_title();
 	apply_chat_area_config();
 	connect_ssh();
@@ -137,6 +153,11 @@ MainWindow::~MainWindow()
 	delete ssh_client;
 	delete data_stream;
 	delete timer;
+}
+
+void MainWindow::show() {
+	if(!ready) return;
+	return QWidget::show();
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *e) {
@@ -209,7 +230,7 @@ void MainWindow::save_ui_layout() {
 void MainWindow::closeEvent(QCloseEvent *e) {
 	need_reconnect = false;
 	ssh_client->disconnect();
-	save_ui_layout();
+	if(ready) save_ui_layout();
 	e->accept();
 }
 

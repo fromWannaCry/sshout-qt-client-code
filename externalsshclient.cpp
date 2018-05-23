@@ -16,6 +16,8 @@
 #include <QtCore/QProcess>
 #include <QtCore/QSet>
 #include <QtCore/QTimer>
+#include <QtCore/QTemporaryFile>
+#include <QtCore/QDebug>
 
 ExternalSSHClient::ExternalSSHClient(QObject *parent, const QString &ssh_program_path) : SSHClient(parent) {
 	ssh_state = DISCONNECTED;
@@ -23,10 +25,15 @@ ExternalSSHClient::ExternalSSHClient(QObject *parent, const QString &ssh_program
 	ssh_process = new QProcess(this);
 	environment = ssh_process->systemEnvironment().toSet();
 	reconnect_interval = -1;
+	temp_known_hosts_file = NULL;
 	QObject::connect(ssh_process, SIGNAL(stateChanged(QProcess::ProcessState)), SLOT(from_process_state_change(QProcess::ProcessState)));
 	QObject::connect(ssh_process, SIGNAL(started()), SLOT(from_process_started()));
 	QObject::connect(ssh_process, SIGNAL(finished(int)), SLOT(from_process_finished(int)));
 	QObject::connect(ssh_process, SIGNAL(readyReadStandardOutput()), SLOT(from_process_ready_read()));
+}
+
+ExternalSSHClient::~ExternalSSHClient() {
+	delete temp_known_hosts_file;
 }
 
 void ExternalSSHClient::set_ssh_program_path(const QString &path) {
@@ -47,6 +54,20 @@ bool ExternalSSHClient::connect(const QString &host, quint16 port, const QString
 	ssh_args.clear();
 	//ssh_args << "-o" << "BatchMode=yes";
 	ssh_args << "-o" << "ServerAliveInterval=60";
+	ssh_args << "-o" << "StrictHostKeyChecking=yes";
+	if(!known_hosts.isEmpty()) {
+		temp_known_hosts_file = new QTemporaryFile;
+		temp_known_hosts_file->open();
+		foreach(const QString &i, known_hosts) {
+			QByteArray bytes = i.toLocal8Bit().append('\n');
+			temp_known_hosts_file->write(bytes);
+		}
+		temp_known_hosts_file->close();
+		ssh_args << "-o" << "UserKnownHostsFile=" + temp_known_hosts_file->fileName();
+	}
+	ssh_args << "-o" << "ChallengeResponseAuthentication=no";
+	ssh_args << "-o" << "PasswordAuthentication=no";
+	ssh_args << "-o" << "PubkeyAuthentication=yes";
 	ssh_args << host;
 	ssh_args << "-p" << QString::number(port);
 	ssh_args << "-l" << user;
@@ -54,6 +75,7 @@ bool ExternalSSHClient::connect(const QString &host, quint16 port, const QString
 	ssh_args << "-T";
 	if(!ssh_args_extra.isEmpty()) ssh_args << ssh_args_extra;
 	if(!command.isEmpty()) ssh_args << command;
+	//qDebug() << ssh_args;
 	ssh_process->start(ssh_program_path, ssh_args, QIODevice::ReadWrite);
 	//QIODevice::open(QIODevice::ReadWrite | QIODevice::Unbuffered);
 	QIODevice::open(QIODevice::ReadWrite);
@@ -71,6 +93,10 @@ void ExternalSSHClient::reconnect() {
 	if(ssh_program_path.isEmpty()) return;
 	if(ssh_args.isEmpty()) return;
 	ssh_process->start(ssh_program_path, ssh_args);
+}
+
+void ExternalSSHClient::set_known_hosts(const QStringList &list) {
+	known_hosts = list;
 }
 
 void ExternalSSHClient::set_identify_file(const QString &path) {
@@ -199,6 +225,8 @@ void ExternalSSHClient::from_process_started() {
 }
 
 void ExternalSSHClient::from_process_finished(int status) {
+	delete temp_known_hosts_file;
+	temp_known_hosts_file = NULL;
 	emit disconnected(status);
 }
 

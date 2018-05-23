@@ -19,15 +19,19 @@
 #include <QtCore/QSet>
 #include <QtCore/QProcess>
 
+class QTemporaryFile;
+
 class ExternalSSHClient : public SSHClient {
 	Q_OBJECT
 public:
 	ExternalSSHClient(QObject * = NULL);
 	ExternalSSHClient(QObject *, const QString &);
+	~ExternalSSHClient();
 	void set_ssh_program_path(const QString &);
 	void set_extra_args(const QStringList &);
 	bool connect(const QString &, quint16, const QString &, const QString & = QString());
 	void disconnect();
+	void set_known_hosts(const QStringList &);
 	void set_identify_file(const QString &);
 	void setenv(const QString &, const QString &);
 	void unsetenv(const QString &);
@@ -64,6 +68,8 @@ private:
 	QStringList ssh_args;
 	QStringList ssh_args_extra;
 	QProcess *ssh_process;
+	QStringList known_hosts;
+	QTemporaryFile *temp_known_hosts_file;
 	QString identify_file;
 	QSet<QString> environment;
 	int reconnect_interval;

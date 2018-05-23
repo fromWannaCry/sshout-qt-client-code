@@ -34,19 +34,21 @@ SettingsDialog::SettingsDialog(QWidget *parent, QSettings *config) :
 #ifdef HAVE_OPENSSH_LIBRARY
 	bool use_internal_ssh_library = config->value("UseInternalSSHLibrary", false).toBool()
 	ui->checkBox_use_internal_ssh_library->setChecked(use_internet_ssh_library);
-	use_internet_ssh_library_checked(use_internal_ssh_library);
 #else
 	bool use_internal_ssh_library = false;
-	ui->checkBox_use_internal_ssh_library->setEnabled(false);
 	ui->checkBox_use_internal_ssh_library->setChecked(false);
+	ui->checkBox_use_internal_ssh_library->setEnabled(false);
 #endif
-	if(!use_internal_ssh_library) {
+	if(use_internal_ssh_library) {
+		ui->checkBox_use_separete_known_hosts->setChecked(true);
+		ui->checkBox_use_separete_known_hosts->setEnabled(false);
+	} else {
 		bool use_separate_known_hosts = config->value("UseSeparateKnownHosts", false).toBool();
 		ui->checkBox_use_separete_known_hosts->setChecked(use_separate_known_hosts);
 		if(!use_separate_known_hosts) ui->textEdit_known_hosts->setEnabled(false);
 	}
 
-	ui->textEdit_known_hosts->setPlainText(config->value("KnownHosts").toString());
+	ui->textEdit_known_hosts->setPlainText(config->value("KnownHosts").toStringList().join("\n"));
 	ui->lineEdit_ssh_program->setText(config->value("SSHProgramPath", DEFAULT_SSH_PROGRAM_PATH).toString());
 	ui->lineEdit_ssh_args->setText(config->value("SSHArgs").toString());
 
@@ -176,7 +178,7 @@ void SettingsDialog::save_settings() {
 	bool use_internal_ssh_library = false;
 #endif
 	if(!use_internal_ssh_library) config->setValue("UseSeparateKnownHosts", ui->checkBox_use_separete_known_hosts->isChecked());
-	config->setValue("KnownHosts", ui->textEdit_known_hosts->toPlainText());
+	config->setValue("KnownHosts", ui->textEdit_known_hosts->toPlainText().split('\n'));
 	config->setValue("SSHProgramPath", ui->lineEdit_ssh_program->text());
 	config->setValue("SSHArgs", ui->lineEdit_ssh_args->text());
 	config->beginGroup("SSHEnvironment");
