@@ -23,6 +23,7 @@
 #include "connectionwindow.h"
 #include "sshout/api.h"
 #include "packet.h"
+#include "messagelog.h"
 #include <QtCore/QSettings>
 #include <QtCore/QTimer>
 #include <QtCore/QDataStream>
@@ -136,10 +137,17 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	connect(timer, SIGNAL(timeout()), SLOT(send_request_online_users()));
 	//cache_file_allocator = new QTemporaryFile(this);
 	//cache_file_allocator->setAutoRemove(false);
-	cache_dir = new QDir(QString("%1/cache/%2").arg(config_dir()).arg(host));
-	if(!cache_dir->mkpath(".")) {
-		qWarning("Cannot create cache directory");
-		QMessageBox::warning(this, QString(), tr("Failed to create cache directory '%1'").arg(cache_dir->path()));
+	log_dir = new QDir(QString("%1/logs/%2").arg(config_dir()).arg(host));
+	if(!log_dir->mkpath("images")) {
+		qWarning("Cannot create image cache directory");
+		QMessageBox::warning(this, QString(), tr("Failed to create image cache directory '%1'").arg(log_dir->path()));
+	}
+	image_cache_dir = new QDir(*log_dir);
+	image_cache_dir->cd("images");
+	message_log = new MessageLog;
+	if(!message_log->open(log_dir->filePath("messages.db"))) {
+		qWarning("Cannot open database for log");
+		QMessageBox::warning(this, QString(), tr("Failed to open message log database; messages won't be logged"));
 	}
 	connect(ui->chat_area->verticalScrollBar(), SIGNAL(valueChanged(int)), SLOT(reset_unread_message_count_from_chat_area_vertical_scroll_bar(int)));
 	unread_message_count = 0;
@@ -222,8 +230,9 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 void MainWindow::save_ui_layout() {
 	bool show_user_list = ui->dockWidget_online_list->isVisible();
 	config->setValue("ShowUserList", show_user_list);
-	if(isMaximized()) config->setValue("WindowMaximized", true);
-	else config->setValue("WindowSize", size());
+	bool is_maximized = isMaximized();
+	config->setValue("WindowMaximized", is_maximized);
+	if(!is_maximized) config->setValue("WindowSize", size());
 	if(show_user_list) {
 		config->setValue("UserListWindowSize", ui->dockWidget_online_list->size());
 	}
@@ -256,7 +265,7 @@ QString MainWindow::create_random_hex_string(int len) {
 	return QString::fromLatin1(buffer);
 }
 
-void MainWindow::print_image(const QByteArray &data) {
+void MainWindow::print_image(const QByteArray &data, QByteArray &file_name_buffer) {
 	QImage image;
 	if(!image.loadFromData(data, "JPEG")) {
 		ui->chat_area->appendPlainText(tr("[Failed to load image]") + "\n");
@@ -281,7 +290,7 @@ void MainWindow::print_image(const QByteArray &data) {
 	QFile image_file;
 	do {
 		image_file_name = create_random_hex_string(16) + ".jpg";
-		image_file.setFileName(cache_dir->filePath(image_file_name));
+		image_file.setFileName(image_cache_dir->filePath(image_file_name));
 	} while(image_file.exists());
 	if(!image_file.open(QIODevice::WriteOnly)) {
 		ui->chat_area->appendPlainText(tr("[Failed to save image, %1]").arg(image_file.errorString()));
@@ -293,6 +302,7 @@ void MainWindow::print_image(const QByteArray &data) {
 		return;
 	}
 	image_file.close();
+	file_name_buffer = image_file_name.toUtf8();
 	QUrl url(image_file.fileName());
 	url.setScheme("file");
 	qDebug() << url;
@@ -310,12 +320,11 @@ void MainWindow::print_image(const QByteArray &data) {
 	ui->chat_area->setTextCursor(cursor);
 }
 
-void MainWindow::print_message(const QTime &time, const QString &msg_from, const QString &msg_to, quint8 msg_type, const QByteArray &message) {
-	//QDateTime dt = QDateTime::currentDateTime();
-	//QTime t = QTime::currentTime();
+void MainWindow::print_message(const QDateTime &dt, const QString &msg_from, const QString &msg_to, quint8 msg_type, const QByteArray &message) {
+	QTime t = dt.time();
 	QString tag = (msg_to.isEmpty() || msg_to == QString("GLOBAL")) ?
-		QString("%1 %2").arg(msg_from).arg(time.toString("H:mm:ss")) :
-		tr("%1 to %2 %3").arg(msg_from).arg(msg_to).arg(time.toString("H:mm:ss"));
+		QString("%1 %2").arg(msg_from).arg(t.toString("H:mm:ss")) :
+		tr("%1 to %2 %3").arg(msg_from).arg(msg_to).arg(t.toString("H:mm:ss"));
 	qDebug() << QString::fromUtf8(message);
 	qDebug() << tag;
 	QScrollBar *chat_area_scroll_bar = ui->chat_area->verticalScrollBar();
@@ -325,6 +334,7 @@ void MainWindow::print_message(const QTime &time, const QString &msg_from, const
 	cursor.movePosition(QTextCursor::End);
 	ui->chat_area->setTextCursor(cursor);
 	ui->chat_area->insertPlainText("\n");
+	QByteArray image_file_name;
 	switch(msg_type) {
 		case SSHOUT_API_MESSAGE_TYPE_PLAIN:
 			ui->chat_area->insertPlainText(tag + "\n" + QString::fromUtf8(message));
@@ -335,7 +345,7 @@ void MainWindow::print_message(const QTime &time, const QString &msg_from, const
 			break;
 		case SSHOUT_API_MESSAGE_TYPE_IMAGE:
 			ui->chat_area->insertPlainText(tag + "\n");
-			print_image(message);
+			print_image(message, image_file_name);
 			break;
 	}
 	apply_chat_area_config();
@@ -349,6 +359,8 @@ void MainWindow::print_message(const QTime &time, const QString &msg_from, const
 		if(config->value("UseWindowAlert", false).toBool()) QApplication::alert(this);
 		config->endGroup();
 	}
+	message_log->append_message(dt, msg_from, msg_to, msg_type,
+		msg_type == SSHOUT_API_MESSAGE_TYPE_IMAGE ? image_file_name : message);
 }
 
 void MainWindow::send_hello() {
@@ -623,7 +635,7 @@ void MainWindow::read_ssh() {
 						return;
 					}
 					qDebug() << msg_len;
-					print_message(QDateTime::fromTime_t(time).time(),
+					print_message(QDateTime::fromTime_t(time),
 						      QString::fromUtf8(from_user, from_user_len),
 						      QString::fromUtf8(to_user, to_user_len),
 						      msg_type,
@@ -843,13 +855,12 @@ void MainWindow::changeEvent(QEvent *e) {
 }
 
 void MainWindow::show_sessions_of_user(QListWidgetItem *item_from_list) {
-	qDebug("slot: MainWindow::show_sessions_of_user(%p)", item_from_list);
+	//qDebug("slot: MainWindow::show_sessions_of_user(%p)", item_from_list);
 	QList<UserIdAndHostName> *sessions = (QList<UserIdAndHostName> *)item_from_list->data(Qt::UserRole).value<void *>();
 	if(sessions->isEmpty()) {
 		qWarning("MainWindow::show_sessions_of_user: session list empty");
 		return;
 	}
-	//QDialog d;
 	QTreeWidget *tree_widget = new QTreeWidget;
 	tree_widget->setAttribute(Qt::WA_DeleteOnClose);
 	tree_widget->setColumnCount(2);
@@ -865,12 +876,12 @@ void MainWindow::show_sessions_of_user(QListWidgetItem *item_from_list) {
 		//height += item->sizeHint(0).height();
 	}
 	//qDebug("height = %d", height);
-	//d.exec();
+	//tree_widget->setContextMenuPolicy(Qt::CustomContextMenu);
+	//connect(tree_widget, SIGNAL(customContextMenuRequested(QPoint)), SLOT(show_session_list_context_menu(QPoint)));
 	tree_widget->setWindowTitle(tr("Active Sessions of User %1").arg(item_from_list->text()));
 	tree_widget->resizeColumnToContents(0);
 	//tree_widget->resizeColumnToContents(1);
 	//int width = tree_widget->columnWidth(0) + tree_widget->columnWidth(1);
-	//qDebug("%d, %d", tree_widget->columnWidth(0), tree_widget->columnWidth(1));
 	tree_widget->setGeometry(x() + (width() - 240) / 2, y() + (height() - 160) / 2, 240, 160);
 	QEventLoop event_loop;
 	connect(tree_widget, SIGNAL(destroyed()), &event_loop, SLOT(quit()));

@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -18,7 +18,8 @@ SOURCES += main.cpp\
     mainwindow.cpp \
     sshclient.cpp \
     externalsshclient.cpp \
-    packet.cpp
+    packet.cpp \
+    messagelog.cpp
 
 HEADERS  += connectionwindow.h \
     settingsdialog.h \
@@ -27,7 +28,8 @@ HEADERS  += connectionwindow.h \
     sshclient.h \
     externalsshclient.h \
     common.h \
-    packet.h
+    packet.h \
+    messagelog.h
 
 FORMS    += connectionwindow.ui \
     settingsdialog.ui \

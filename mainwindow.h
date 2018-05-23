@@ -24,9 +24,11 @@
 #include "sshclient.h"
 
 class QSettings;
+class QDateTime;
 class QDir;
 class QTextCursor;
 class QListWidgetItem;
+class MessageLog;
 
 namespace Ui {
 class MainWindow;
@@ -61,8 +63,8 @@ private:
 		QString host_name;
 	};
 	QString create_random_hex_string(int);
-	void print_image(const QByteArray &);
-	void print_message(const QTime &t, const QString &, const QString &, quint8, const QByteArray &);
+	void print_image(const QByteArray &, QByteArray &);
+	void print_message(const QDateTime &t, const QString &, const QString &, quint8, const QByteArray &);
 	void send_hello();
 	void send_message(const QString &, quint8, const QByteArray &);
 	void save_ui_layout();
@@ -87,7 +89,7 @@ private:
 	bool need_reconnect;
 	QTimer *timer;
 	//QTemporaryFile *cache_file_allocator;
-	QDir *cache_dir;
+	QDir *log_dir, *image_cache_dir;
 	QString last_message_html;
 	//QPoint pos_in_chat_area;
 	//QTextCursor *current_cursor_in_chat_area;
@@ -95,6 +97,7 @@ private:
 	int my_id;
 	QString my_user_name;
 	bool ready;
+	MessageLog *message_log;
 
 private slots:
 	void connect_ssh();
@@ -118,6 +121,7 @@ private slots:
 	//void copy_link_from_chat_area();
 	void reset_unread_message_count_from_chat_area_vertical_scroll_bar(int);
 	void show_sessions_of_user(QListWidgetItem *);
+	//void show_session_list_context_menu(const QPoint &);
 };
 
 #endif // MAINWINDOW_H
