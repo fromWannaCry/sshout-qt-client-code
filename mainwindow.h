@@ -125,6 +125,7 @@ private slots:
 	void reset_unread_message_count_from_chat_area_vertical_scroll_bar(int);
 	void show_sessions_of_user(QListWidgetItem *);
 	//void show_session_list_context_menu(const QPoint &);
+	void send_image_from_clipboard();
 };
 
 #endif // MAINWINDOW_H

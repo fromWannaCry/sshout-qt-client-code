@@ -922,3 +922,12 @@ void MainWindow::dropEvent(QDropEvent *e) {
 		send_image(image);
 	}
 }
+
+void MainWindow::send_image_from_clipboard() {
+	QImage image = QApplication::clipboard()->image();
+	if(image.isNull()) {
+		ui->statusbar->showMessage(tr("No image available from clipboard"), 10000);
+		return;
+	}
+	send_image(image);
+}
