@@ -50,7 +50,9 @@ protected:
 	bool eventFilter(QObject *, QEvent *);
 	void closeEvent(QCloseEvent *);
 	void changeEvent(QEvent *);
-	//void focusInEvent(QFocusEvent *);
+	void dragEnterEvent(QDragEnterEvent *);
+	void dragLeaveEvent(QDragLeaveEvent *);
+	void dropEvent(QDropEvent *);
 
 private:
 	struct UserInfo {
@@ -67,6 +69,7 @@ private:
 	void print_message(const QDateTime &t, const QString &, const QString &, quint8, const QByteArray &);
 	void send_hello();
 	void send_message(const QString &, quint8, const QByteArray &);
+	void send_image(const QImage &);
 	void save_ui_layout();
 	void add_user_item(const QString &, QList<UserIdAndHostName> *);
 	void remove_offline_user_items(const QSet<QString> &);

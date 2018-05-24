@@ -36,3 +36,6 @@ FORMS    += connectionwindow.ui \
     mainwindow.ui
 
 #DEFINES += __STDC__
+
+RESOURCES += \
+    icons.qrc

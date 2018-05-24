@@ -153,6 +153,7 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	connect(ui->chat_area->verticalScrollBar(), SIGNAL(valueChanged(int)), SLOT(reset_unread_message_count_from_chat_area_vertical_scroll_bar(int)));
 	unread_message_count = 0;
 	ready = true;
+	setAcceptDrops(true);
 	update_window_title();
 	apply_chat_area_config();
 	connect_ssh();
@@ -287,7 +288,7 @@ void MainWindow::print_image(const QByteArray &data, QByteArray &file_name_buffe
 	image_file_name = QCryptographicHash::hash(data, QCryptographicHash::Sha1).toHex() + ".jpg";
 	image_file.setFileName(image_cache_dir->filePath(image_file_name));
 	if(image_file.exists()) {
-		ui->statusbar->showMessage(tr("Image file '%1' is already exist, skipping write").arg(image_file_name));
+		ui->statusbar->showMessage(tr("Image file '%1' is already exist, skipping write").arg(image_file_name), 10000);
 	} else {
 		if(!image_file.open(QIODevice::WriteOnly)) {
 			ui->chat_area->appendPlainText(tr("[Failed to save image, %1]").arg(image_file.errorString()));
@@ -407,6 +408,35 @@ void MainWindow::send_message() {
 
 	last_message_html = ui->textEdit_message_to_send->toHtml();
 	ui->textEdit_message_to_send->clear();
+}
+
+void MainWindow::send_image(const QImage &image) {
+	QDialog preview_dialog(this);
+	QVBoxLayout layout(&preview_dialog);
+	QLabel image_label(&preview_dialog);
+	image_label.setPixmap(QPixmap::fromImage(image));
+	layout.addWidget(&image_label);
+	QDialogButtonBox button_box(Qt::Horizontal, &preview_dialog);
+	button_box.addButton(QDialogButtonBox::Ok)->setFocus();
+	button_box.addButton(QDialogButtonBox::Cancel)->setAutoDefault(false);
+	layout.addWidget(&button_box);
+	preview_dialog.setWindowTitle(tr("Preview"));
+	preview_dialog.connect(&button_box, SIGNAL(accepted()), SLOT(accept()));
+	preview_dialog.connect(&button_box, SIGNAL(rejected()), SLOT(reject()));
+	if(!preview_dialog.exec()) return;
+	QByteArray data;
+	QBuffer buffer(&data, this);
+	buffer.open(QIODevice::WriteOnly);
+	int quality = -1;
+	if(config->value("OverrideDefaultJPEGQuality", false).toBool()) {
+		quality = config->value("JPEGQuality", -1).toInt();
+	}
+	if(!image.save(&buffer, "JPEG", quality)) {
+		QMessageBox::critical(this, QString(), tr("Cannot export the image as JPEG"));
+		return;
+	}
+	buffer.close();
+	send_message("GLOBAL", SSHOUT_API_MESSAGE_TYPE_IMAGE, data);
 }
 
 void MainWindow::add_user_item(const QString &user_name, QList<UserIdAndHostName> *logins) {
@@ -735,32 +765,7 @@ void MainWindow::send_image() {
 			QMessageBox::critical(this, QString(), tr("Cannot load file '%1' as an image").arg(path));
 			return;
 		}
-		QDialog preview_dialog(this);
-		QVBoxLayout layout(&preview_dialog);
-		QLabel image_label(&preview_dialog);
-		image_label.setPixmap(QPixmap::fromImage(image));
-		layout.addWidget(&image_label);
-		QDialogButtonBox button_box(Qt::Horizontal, &preview_dialog);
-		button_box.addButton(QDialogButtonBox::Ok)->setFocus();
-		button_box.addButton(QDialogButtonBox::Cancel)->setAutoDefault(false);
-		layout.addWidget(&button_box);
-		preview_dialog.setWindowTitle(tr("Preview"));
-		preview_dialog.connect(&button_box, SIGNAL(accepted()), SLOT(accept()));
-		preview_dialog.connect(&button_box, SIGNAL(rejected()), SLOT(reject()));
-		if(!preview_dialog.exec()) return;
-		QByteArray data;
-		QBuffer buffer(&data, this);
-		buffer.open(QIODevice::WriteOnly);
-		int quality = -1;
-		if(config->value("OverrideDefaultJPEGQuality", false).toBool()) {
-			quality = config->value("JPEGQuality", -1).toInt();
-		}
-		if(!image.save(&buffer, "JPEG", quality)) {
-			QMessageBox::critical(this, QString(), tr("Cannot export the image as JPEG"));
-			return;
-		}
-		buffer.close();
-		send_message("GLOBAL", SSHOUT_API_MESSAGE_TYPE_IMAGE, data);
+		send_image(image);
 	}
 }
 
@@ -803,13 +808,13 @@ void MainWindow::show_chat_area_context_menu(const QPoint &p) {
 	if(triggered_action) {
 		if(triggered_action == open_image_action) {
 			QUrl url(cursor.charFormat().toImageFormat().name());
-			ui->statusbar->showMessage(tr("Opening %1").arg(url.toString()));
+			ui->statusbar->showMessage(tr("Opening %1").arg(url.toString()), 10000);
 			QDesktopServices::openUrl(url);
 		} else if(triggered_action == copy_image_action) {
 			QUrl url(cursor.charFormat().toImageFormat().name());
 			QVariant v = ui->chat_area->document()->resource(QTextDocument::ImageResource, url);
 			if(v.isNull()) {
-				ui->statusbar->showMessage(tr("Failed to copy image: invalid image"));
+				ui->statusbar->showMessage(tr("Failed to copy image: invalid image"), 10000);
 			} else {
 				QImage image = v.value<QImage>();
 				QApplication::clipboard()->setImage(image);
@@ -878,4 +883,41 @@ void MainWindow::show_sessions_of_user(QListWidgetItem *item_from_list) {
 	tree_widget->show();
 	event_loop.exec();
 	//qDebug("end of MainWindow::show_sessions_of_user");
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *e) {
+	//qDebug("function: MainWindow::dragEnterEvent(%p)", e);
+	const QMimeData *data = e->mimeData();
+	//qDebug() << data->hasHtml() << data->hasImage() << data->hasUrls();
+	if(!data->hasImage() && !data->hasUrls()) return;
+	e->acceptProposedAction();
+	ui->statusbar->showMessage(tr("Dropping to send image"));
+}
+
+void MainWindow::dragLeaveEvent(QDragLeaveEvent *e) {
+	qDebug("function: MainWindow::dragLeaveEvent(%p)", e);
+	if(!e->isAccepted()) return;
+	//ui->statusbar->clearMessage();
+}
+
+void MainWindow::dropEvent(QDropEvent *e) {
+	qDebug("function: dropEvent(%p)", e);
+	const QMimeData *data = e->mimeData();
+	//qDebug() << data->hasHtml() << data->hasImage() << data->hasUrls();
+	if(data->hasImage()) send_image(qvariant_cast<QImage>(data->imageData()));
+	else if(data->hasUrls()) {
+		QUrl url = data->urls()[0];
+		if(url.scheme() != QString("file")) {
+			ui->statusbar->showMessage(tr("Can't load '%1' as image: only local files are supported").arg(url.toString()), 10000);
+			return;
+		}
+		QImage image(url.toString(QUrl::RemoveScheme));
+		if(image.isNull()) {
+			QString error_string = tr("Cannot load file '%1' as an image").arg(url.toString());
+			ui->statusbar->showMessage(error_string, 10000);
+			QMessageBox::critical(this, QString(), error_string);
+			return;
+		}
+		send_image(image);
+	}
 }

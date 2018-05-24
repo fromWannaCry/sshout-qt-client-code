@@ -67,7 +67,9 @@ bool MessageLog::open(const QString &path) {
 }
 
 void MessageLog::close() {
-	return database.close();
+	if(!database.isOpen()) return;
+	database.close();
+
 }
 
 bool MessageLog::append_message(const QDateTime &dt, const QString &from_user, const QString &to_user, quint8 type, const QByteArray &message) {
