@@ -68,7 +68,7 @@ SettingsDialog::SettingsDialog(QWidget *parent, QSettings *config) :
 	QString font_name = config->value("DefaultFontFamily").toString();
 	if(!font_name.isEmpty()) ui->fontComboBox->setCurrentFont(QFont(font_name));
 #endif
-	ui->spinBox_font_size->setValue(config->value("DefaultFontSize", 2).toInt());
+	ui->spinBox_font_size->setValue(config->value("DefaultFontSize", 9).toInt());
 	config->endGroup();
 
 	ui->combo_box_language->setCompleter(NULL);

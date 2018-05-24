@@ -62,7 +62,7 @@ private:
 		int id;
 		QString host_name;
 	};
-	QString create_random_hex_string(int);
+	//QString create_random_hex_string(int);
 	void print_image(const QByteArray &, QByteArray &);
 	void print_message(const QDateTime &t, const QString &, const QString &, quint8, const QByteArray &);
 	void send_hello();

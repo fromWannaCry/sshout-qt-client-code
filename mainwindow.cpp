@@ -31,6 +31,8 @@
 #include <QtCore/QTime>
 #include <QtCore/QBuffer>
 #include <QtCore/qglobal.h>
+#include <QtCore/QUrl>
+#include <QtCore/QCryptographicHash>
 #include <QtGui/QImage>
 #include <QtGui/QClipboard>
 #include <QtGui/QTextBlock>
@@ -55,7 +57,6 @@
 #include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QPushButton>
 #endif
-#include <QtCore/QUrl>
 //#include <QtGui/QRubberBand>
 #include <stdio.h>
 #include <QtCore/QDebug>
@@ -252,6 +253,7 @@ void MainWindow::connect_ssh() {
 	}
 }
 
+/*
 QString MainWindow::create_random_hex_string(int len) {
 	//char buffer[len * 2];
 	QByteArray buffer;
@@ -265,6 +267,7 @@ QString MainWindow::create_random_hex_string(int len) {
 	}
 	return QString::fromLatin1(buffer);
 }
+*/
 
 void MainWindow::print_image(const QByteArray &data, QByteArray &file_name_buffer) {
 	QImage image;
@@ -275,20 +278,28 @@ void MainWindow::print_image(const QByteArray &data, QByteArray &file_name_buffe
 
 	QString image_file_name;
 	QFile image_file;
+/*
 	do {
 		image_file_name = create_random_hex_string(16) + ".jpg";
 		image_file.setFileName(image_cache_dir->filePath(image_file_name));
 	} while(image_file.exists());
-	if(!image_file.open(QIODevice::WriteOnly)) {
-		ui->chat_area->appendPlainText(tr("[Failed to save image, %1]").arg(image_file.errorString()));
-		return;
-	}
-	if(image_file.write(data) < data.length()) {
-		ui->chat_area->appendPlainText(tr("[File %1 short write]").arg(image_file_name));
+*/
+	image_file_name = QCryptographicHash::hash(data, QCryptographicHash::Sha1).toHex() + ".jpg";
+	image_file.setFileName(image_cache_dir->filePath(image_file_name));
+	if(image_file.exists()) {
+		ui->statusbar->showMessage(tr("Image file '%1' is already exist, skipping write").arg(image_file_name));
+	} else {
+		if(!image_file.open(QIODevice::WriteOnly)) {
+			ui->chat_area->appendPlainText(tr("[Failed to save image, %1]").arg(image_file.errorString()));
+			return;
+		}
+		if(image_file.write(data) < data.length()) {
+			ui->chat_area->appendPlainText(tr("[File %1 short write]").arg(image_file_name));
+			image_file.close();
+			return;
+		}
 		image_file.close();
-		return;
 	}
-	image_file.close();
 	file_name_buffer = image_file_name.toUtf8();
 	QUrl url(image_file.fileName());
 	url.setScheme("file");
