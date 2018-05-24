@@ -896,9 +896,9 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *e) {
 }
 
 void MainWindow::dragLeaveEvent(QDragLeaveEvent *e) {
-	qDebug("function: MainWindow::dragLeaveEvent(%p)", e);
+	//qDebug("function: MainWindow::dragLeaveEvent(%p)", e);
 	if(!e->isAccepted()) return;
-	//ui->statusbar->clearMessage();
+	ui->statusbar->clearMessage();
 }
 
 void MainWindow::dropEvent(QDropEvent *e) {

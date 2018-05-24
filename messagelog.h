@@ -6,6 +6,7 @@
 
 class QString;
 class QDateTime;
+class QFile;
 
 class MessageLog {
 public:
@@ -16,6 +17,7 @@ public:
 
 private:
 	QSqlDatabase database;
+	QFile *lock_file;
 };
 
 #endif // MESSAGELOG_H

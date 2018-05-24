@@ -30,9 +30,12 @@
 //#include <QtCore/QTextCodec>
 #include <QtCore/QFile>
 #include <QtCore/QDir>
+#include <QtCore/QTranslator>
 #include <QtCore/QDebug>
 
 #define CONFIG_FILE_NAME "sshout.cfg"
+
+static QTranslator *translator;
 
 static void print_usage(const char *name) {
 	fprintf(stderr, "Usage: %s [<options>] [<host>|ssh://<host>[:<port>][/]]\n"
@@ -56,6 +59,24 @@ QString config_dir() {
 	if(!QFile::exists(in_home)) mkdir(in_home.toLocal8Bit().data(), 0750);
 	return in_home;
 #endif
+}
+
+bool load_messages_translation(QString language) {
+	language.replace('_', '-');
+	QStringList translations_directories(QApplication::applicationDirPath() + "/translations");
+#ifdef Q_OS_MAC
+	translations_directories << QApplication::applicationDirPath() + "/../Resources/Translations";
+	translations_directories << QApplication::applicationDirPath() + "/../Translations";
+#endif
+#if !defined Q_OS_WIN || defined Q_OS_WINCE
+	translations_directories << QApplication::applicationDirPath() + "/../share/sshout-qt/translations";
+	translations_directories << "/usr/share/sshout-qt/translations";
+#endif
+	QString file_name = QString("sshout-qt.%1.qm").arg(language);
+	foreach(const QString &dir, translations_directories) {
+		if(translator->load(file_name, dir, "-")) return true;
+	}
+	return false;
 }
 
 int main(int argc, char *argv[]) {
@@ -109,6 +130,22 @@ int main(int argc, char *argv[]) {
 	if(argc - optind > 1) {
 		print_usage(argv[0]);
 		return -1;
+	}
+	translator = new QTranslator;
+	QString language = config.value("Language").toString();
+	if(language.isEmpty()) {
+		const char *language = getenv("LANGUAGE");
+		if(language) {
+			QStringList languages = QString(language).split(':');
+			foreach(const QString &l, languages) {
+				if(load_messages_translation(l)) break;
+			}
+		} else {
+			language = getenv("LANG");
+			if(language) load_messages_translation(QString(language));
+		}
+	} else if(language != QString("en")) {
+		load_messages_translation(language);
 	}
 	qsrand(time(NULL));
 	if(argc - optind == 1) {
