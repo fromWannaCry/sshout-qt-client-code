@@ -63,8 +63,8 @@ QString config_dir() {
 
 void get_translations_directories(QStringList &directories) {
 #ifdef Q_OS_MAC
-	translations_directories << QApplication::applicationDirPath() + "/../Resources/Translations";
-	translations_directories << QApplication::applicationDirPath() + "/../Translations";
+	directories << QApplication::applicationDirPath() + "/../Resources/Translations";
+	directories << QApplication::applicationDirPath() + "/../Translations";
 #endif
 	directories << QApplication::applicationDirPath() + "/translations";
 #if !defined Q_OS_WIN || defined Q_OS_WINCE
