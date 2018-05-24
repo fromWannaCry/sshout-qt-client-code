@@ -16,6 +16,7 @@
 #include "settingsdialog.h"
 #include "ui_settingsdialog.h"
 #include <QtCore/QSettings>
+#include <QtCore/QHash>
 #if QT_VERSION < 0x050000
 #include <QtGui/QFileDialog>
 #include <QtGui/QMessageBox>
@@ -26,6 +27,8 @@
 #include <QtWidgets/QMessageBox>
 #include<QtWidgets/QStyleFactory>
 #endif
+
+extern void get_translations_directories(QStringList &);
 
 SettingsDialog::SettingsDialog(QWidget *parent, QSettings *config) :
 	QDialog(parent),
@@ -75,7 +78,19 @@ SettingsDialog::SettingsDialog(QWidget *parent, QSettings *config) :
 	ui->combo_box_language->setEditable(false);
 	ui->combo_box_language->addItem(tr("Default"));
 	ui->combo_box_language->addItem(QString("English (%1)").arg(tr("built-in")), "en");
-	// TODO: find translated messages files
+	language_code_to_name.insert("zh-cn", QString::fromUtf8("简体中文"));
+	language_code_to_name.insert("zh-hans", QString::fromUtf8("简体中文"));
+	QStringList translations_directories;
+	get_translations_directories(translations_directories);
+	foreach(const QString &d, translations_directories) {
+		QStringList codes = language_code_to_name.keys();
+		foreach(const QString &m, codes) {
+			QFile f(QString("%1/sshout.%2.qm").arg(d).arg(m));
+			if(!f.exists()) continue;
+			ui->combo_box_language->addItem(language_code_to_name[m], m);
+		}
+	}
+
 	QVariant language = config->value("Language");
 	if(!language.isNull()) {
 		int index = ui->combo_box_language->findData(language);

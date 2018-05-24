@@ -61,21 +61,26 @@ QString config_dir() {
 #endif
 }
 
-bool load_messages_translation(QString language) {
-	language.replace('_', '-');
-	int dot_i = language.indexOf('.');
-	if(dot_i != -1) language.truncate(dot_i);
-	QStringList translations_directories(QApplication::applicationDirPath() + "/translations");
+void get_translations_directories(QStringList &directories) {
 #ifdef Q_OS_MAC
 	translations_directories << QApplication::applicationDirPath() + "/../Resources/Translations";
 	translations_directories << QApplication::applicationDirPath() + "/../Translations";
 #endif
+	directories << QApplication::applicationDirPath() + "/translations";
 #if !defined Q_OS_WIN || defined Q_OS_WINCE
-	translations_directories << QApplication::applicationDirPath() + "/../share/sshout-qt/translations";
-	translations_directories << "/usr/share/sshout-qt/translations";
+	directories << QApplication::applicationDirPath() + "/../share/sshout-qt/translations";
+	directories << "/usr/share/sshout-qt/translations";
 #endif
+}
+
+bool load_messages_translation(QString language) {
+	language.replace('_', '-');
+	int dot_i = language.indexOf('.');
+	if(dot_i != -1) language.truncate(dot_i);
+	QStringList translations_directories;
+	get_translations_directories(translations_directories);
 	QString file_name = QString("sshout.%1.qm").arg(language.toLower());
-	qDebug() << file_name;
+	//qDebug() << file_name;
 	foreach(const QString &dir, translations_directories) {
 		if(translator->load(file_name, dir, "-")) return true;
 	}

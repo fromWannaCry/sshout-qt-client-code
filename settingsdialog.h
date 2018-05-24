@@ -21,6 +21,7 @@
 #else
 #include <QtWidgets/QDialog>
 #endif
+#include <QtCore/QHash>
 
 class QSettings;
 
@@ -40,6 +41,7 @@ public:
 private:
 	Ui::SettingsDialog *ui;
 	QSettings *config;
+	QHash<QString, QString> language_code_to_name;
 
 private slots:
 	void use_internal_ssh_library_checked(bool);
