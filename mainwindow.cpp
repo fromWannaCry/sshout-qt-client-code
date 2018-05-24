@@ -56,6 +56,7 @@
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QPushButton>
+#include <QMimeData>
 #endif
 //#include <QtGui/QRubberBand>
 #include <stdio.h>
