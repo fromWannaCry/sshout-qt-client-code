@@ -137,6 +137,7 @@ int main(int argc, char *argv[]) {
 	} else {
 		w = new ConnectionWindow(NULL, &config);
 	}
+	w->setAttribute(Qt::WA_DeleteOnClose);
 	w->show();
 	return a.exec();
 }

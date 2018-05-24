@@ -291,7 +291,7 @@ void MainWindow::print_image(const QByteArray &data, QByteArray &file_name_buffe
 		ui->statusbar->showMessage(tr("Image file '%1' is already exist, skipping write").arg(image_file_name), 10000);
 	} else {
 		if(!image_file.open(QIODevice::WriteOnly)) {
-			ui->chat_area->appendPlainText(tr("[Failed to save image, %1]").arg(image_file.errorString()));
+			ui->chat_area->appendPlainText(tr("[Failed to save image to disk, %1]").arg(image_file.errorString()));
 			return;
 		}
 		if(image_file.write(data) < data.length()) {
@@ -744,6 +744,7 @@ void MainWindow::settings() {
 
 void MainWindow::change_server() {
 	ConnectionWindow *w = new ConnectionWindow(NULL, config);
+	w->setAttribute(Qt::WA_DeleteOnClose);
 	w->show();
 	close();
 }

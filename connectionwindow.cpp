@@ -159,6 +159,7 @@ void ConnectionWindow::start_main_window() {
 	config->setValue("AutoConnect", ui->checkBox_auto_connect->isChecked());
 	hide();
 	MainWindow *w = new MainWindow(NULL, config, host, port, identify_file);
+	w->setAttribute(Qt::WA_DeleteOnClose);
 	w->show();
 	accept();
 }
