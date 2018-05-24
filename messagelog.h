@@ -4,9 +4,11 @@
 #include <QtCore/qglobal.h>
 #include <QtSql/QSqlDatabase>
 
+QT_BEGIN_NAMESPACE
 class QString;
 class QDateTime;
 class QFile;
+QT_END_NAMESPACE
 
 class MessageLog {
 public:

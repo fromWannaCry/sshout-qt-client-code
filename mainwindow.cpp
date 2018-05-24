@@ -798,7 +798,7 @@ void MainWindow::show_chat_area_context_menu(const QPoint &p) {
 		open_image_action = menu->addAction(tr("&Open Image"));
 		copy_image_action = menu->addAction(tr("Copy &Image"));
 	}
-	menu->addAction(tr("&Copy") + "	" + QKeySequence(QKeySequence::Copy).toString(), ui->chat_area, SLOT(copy()))->setEnabled(cursor.hasComplexSelection());
+	menu->addAction(tr("&Copy") + "	" + QKeySequence(QKeySequence::Copy).toString(), ui->chat_area, SLOT(copy()))->setEnabled(ui->chat_area->textCursor().hasSelection());
 /*
 	if(ui->chat_area->interactionFlags() & Qt::LinksAccessibleByKeyboard || (ui->chat_area->interactionFlags() & Qt::LinksAccessibleByMouse)) {
 		menu->addAction(tr("Copy &Link Location"), this, SLOT(copy_link_from_chat_area()))->setEnabled(is_url(ui->chat_area, cursor.position()));
