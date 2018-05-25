@@ -439,7 +439,7 @@
     </message>
     <message>
         <source>Default</source>
-        <translation type="unfinished"></translation>
+        <translation>默认</translation>
     </message>
     <message>
         <source>built-in</source>
