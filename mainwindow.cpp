@@ -864,7 +864,7 @@ void MainWindow::show_sessions_of_user(QListWidgetItem *item_from_list) {
 	QTreeWidget *tree_widget = new QTreeWidget;
 	tree_widget->setAttribute(Qt::WA_DeleteOnClose);
 	tree_widget->setColumnCount(2);
-	tree_widget->setHeaderLabels(QStringList() << "ID" << "Host");
+	tree_widget->setHeaderLabels(QStringList() << tr("ID") << tr("Host"));
 	//int height = tree_widget->header()->height();
 	foreach(const UserIdAndHostName &id_and_host_name, *sessions) {
 		QTreeWidgetItem *item = new QTreeWidgetItem;
