@@ -105,7 +105,7 @@
         <translation>工具栏</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+20"/>
         <source>Press &amp;Enter to send message</source>
         <translation>使用回车键发送消息(&amp;E)</translation>
     </message>
@@ -360,7 +360,17 @@
         <translation>无法复制图片: 无效的图片</translation>
     </message>
     <message>
-        <location line="+59"/>
+        <location line="+48"/>
+        <source>ID</source>
+        <translation>客户端ID</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Host</source>
+        <translation>来源主机地址</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>Active Sessions of User %1</source>
         <translation>用户 %1 的活动会话</translation>
     </message>
