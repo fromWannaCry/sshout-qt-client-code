@@ -39,3 +39,7 @@ FORMS    += connectionwindow.ui \
 
 RESOURCES += \
     icons.qrc
+
+TRANSLATIONS = translations/sshout.zh-cn.ts
+
+CODECFORTR = UTF-8
