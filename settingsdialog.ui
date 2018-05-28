@@ -204,7 +204,7 @@
          <property name="title">
           <string>Text</string>
          </property>
-         <layout class="QGridLayout" name="gridLayout_4">
+         <layout class="QFormLayout" name="formLayout">
           <item row="0" column="0">
            <widget class="QLabel" name="label_font">
             <property name="text">

@@ -40,6 +40,9 @@ FORMS    += connectionwindow.ui \
 RESOURCES += \
     icons.qrc
 
+QMAKE_CXXFLAGS += -Wno-empty-body -Wno-write-strings
+QMAKE_CXXFLAGS_WARN_OFF += -Wno-empty-body -Wno-write-strings
+
 TRANSLATIONS = translations/sshout.zh-cn.ts
 
 CODECFORTR = UTF-8

@@ -594,6 +594,7 @@ void MainWindow::read_ssh() {
 					return;
 				}
 				send_request_online_users();
+				//ui->statusbar->showMessage(tr("Waiting for user list"), 10000);
 				timer->start();
 				break;
 			case SSHOUT_API_ONLINE_USERS_INFO:
