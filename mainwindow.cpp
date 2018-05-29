@@ -345,8 +345,12 @@ void MainWindow::print_message(const QDateTime &dt, const QString &msg_from, con
 			print_image(message, image_file_name);
 			break;
 	}
+#if 0
 	apply_chat_area_config();
 	ui->chat_area->append(QString());
+#else
+	cursor.insertBlock(QTextBlockFormat(), QTextCharFormat());
+#endif
 	if(should_scroll) chat_area_scroll_bar->setValue(chat_area_scroll_bar->maximum());
 	ui->chat_area->horizontalScrollBar()->setValue(0);
 	if(msg_from != my_user_name && (!isActiveWindow() || !should_scroll)) {

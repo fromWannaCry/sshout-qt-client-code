@@ -43,7 +43,7 @@ bool MessageLog::open(const QString &path) {
 	}
 	if(lock_file->write(QByteArray::number(QCoreApplication::applicationPid())) < 0) {
 		QByteArray error_msg = lock_file->errorString().toLocal8Bit();
-		qWarning("MessageLog::open: cannot write to lock file '%s'", lock_path_ba.data(), error_msg.data());
+		qWarning("MessageLog::open: cannot write to lock file '%s', %s", lock_path_ba.data(), error_msg.data());
 		lock_file->close();
 		return false;
 	}
