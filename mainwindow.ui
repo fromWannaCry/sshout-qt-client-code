@@ -78,6 +78,7 @@
     </property>
     <addaction name="action_press_enter_to_send_message"/>
     <addaction name="action_use_html_for_sending_messages"/>
+    <addaction name="action_paste"/>
     <addaction name="action_settings"/>
    </widget>
    <widget class="QMenu" name="menu_view">
@@ -92,6 +93,7 @@
     </property>
     <addaction name="action_project_page"/>
     <addaction name="action_about"/>
+    <addaction name="action_about_qt"/>
    </widget>
    <addaction name="menu_server"/>
    <addaction name="menu_edit"/>
@@ -224,6 +226,19 @@
   <action name="action_send_image_from_clipboard">
    <property name="text">
     <string>Send Image from Clipboard</string>
+   </property>
+  </action>
+  <action name="action_paste">
+   <property name="text">
+    <string>&amp;Paste</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+V</string>
+   </property>
+  </action>
+  <action name="action_about_qt">
+   <property name="text">
+    <string>About &amp;Qt...</string>
    </property>
   </action>
  </widget>
@@ -436,6 +451,22 @@
     <hint type="destinationlabel">
      <x>201</x>
      <y>191</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>action_paste</sender>
+   <signal>triggered()</signal>
+   <receiver>textEdit_message_to_send</receiver>
+   <slot>paste()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>91</x>
+     <y>316</y>
     </hint>
    </hints>
   </connection>

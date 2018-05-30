@@ -70,6 +70,7 @@ void get_translations_directories(QStringList &directories) {
 #if !defined Q_OS_WIN || defined Q_OS_WINCE
 	directories << QApplication::applicationDirPath() + "/../share/sshout-qt/translations";
 	directories << "/usr/share/sshout-qt/translations";
+	directories << "/usr/share/translations";
 #endif
 }
 
@@ -171,7 +172,6 @@ int main(int argc, char *argv[]) {
 		return a.exec();
 	}
 	QList<QVariant> server_list = config.value("ServerList").toList();
-	qDebug() << server_list;
 	QWidget *w;
 	if(server_list.isEmpty()) {
 		w = new ConnectionWindow(NULL, &config);

@@ -153,6 +153,7 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	}
 	connect(ui->chat_area->verticalScrollBar(), SIGNAL(valueChanged(int)), SLOT(reset_unread_message_count_from_chat_area_vertical_scroll_bar(int)));
 	unread_message_count = 0;
+	connect(ui->action_about_qt, SIGNAL(triggered()), QApplication::instance(), SLOT(aboutQt()));
 	ready = true;
 	setAcceptDrops(true);
 	update_window_title();

@@ -126,6 +126,7 @@ private slots:
 	void show_sessions_of_user(QListWidgetItem *);
 	//void show_session_list_context_menu(const QPoint &);
 	void send_image_from_clipboard();
+	//void show_about_qt();
 };
 
 #endif // MAINWINDOW_H
