@@ -473,10 +473,10 @@ void MainWindow::remove_offline_user_items(const QSet<QString> &keep_set) {
 void MainWindow::update_user_list(const UserInfo *users, unsigned int count) {
 	QSet<QString> user_set;
 	QHash<QString, QList<UserIdAndHostName> > user_logins;
-	my_user_name.clear();
+	//my_user_name.clear();
 	for(unsigned int i=0; i<count; i++) {
 		const UserInfo *p = users + i;
-		if(my_user_name.isEmpty() && p->id == my_id) my_user_name = p->user_name;
+		//if(my_user_name.isEmpty() && p->id == my_id) my_user_name = p->user_name;
 		user_set << p->user_name;
 		user_logins[p->user_name] << (UserIdAndHostName){ p->id, p->host_name };
 	}
@@ -597,6 +597,18 @@ void MainWindow::read_ssh() {
 					need_reconnect = false;
 					ssh_client->disconnect();
 					return;
+				}
+				if(data.length() > 1 + 6 + 2) {
+					quint8 user_name_len;
+					stream >> user_name_len;
+					//qDebug("SSHOUT_API_PASS user_name_len = %hhu", user_name_len);
+					if(1 + 6 + 2 + 1 + user_name_len > data.length()) {
+						qWarning("malformed SSHOUT_API_PASS packet: user_name_len %hhu too large", user_name_len);
+						ssh_client->disconnect();
+						return;
+					}
+					my_user_name = QString::fromUtf8(data.mid(1 + 6 + 2 + 1, user_name_len));
+					//qDebug() << "my_user_name" << my_user_name;
 				}
 				send_request_online_users();
 				//ui->statusbar->showMessage(tr("Waiting for user list"), 10000);
