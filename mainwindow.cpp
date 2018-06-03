@@ -37,13 +37,13 @@
 #include <QtGui/QImage>
 #include <QtGui/QClipboard>
 #include <QtGui/QTextBlock>
-#if QT_VERSION < 0x050000
 #include <QtGui/QKeyEvent>
+#include <QtGui/QDesktopServices>
+#if QT_VERSION < 0x050000
 #include <QtGui/QListWidgetItem>
 #include <QtGui/QFileDialog>
 #include <QtGui/QMessageBox>
 #include <QtGui/QScrollBar>
-#include <QtGui/QDesktopServices>
 #include <QtGui/QDialogButtonBox>
 #include <QtGui/QPushButton>
 #include <QtGui/QTreeWidget>
@@ -51,9 +51,7 @@
 #include <QtWidgets/QListWidgetItem>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QMessageBox>
-#include <QKeyEvent>
-#include <QScrollBar>
-#include <QDesktopServices>
+#include <QtWidgets/QScrollBar>
 #include <QtWidgets/QTreeWidget>
 #include <QtWidgets/QDialogButtonBox>
 #include <QtWidgets/QPushButton>
