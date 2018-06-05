@@ -354,7 +354,7 @@ void MainWindow::print_message(const QDateTime &dt, const QString &msg_from, con
 #endif
 	if(should_scroll) chat_area_scroll_bar->setValue(chat_area_scroll_bar->maximum());
 	ui->chat_area->horizontalScrollBar()->setValue(0);
-	if(msg_from != my_user_name && (!isActiveWindow() || !should_scroll)) {
+	if(!my_user_name.isEmpty() && msg_from != my_user_name && (!isActiveWindow() || !should_scroll)) {
 		unread_message_count++;
 		update_window_title();
 		config->beginGroup("Notification");

@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 	while(true) {
 		int option_index;
 		int c = getopt_long(argc, argv, "p:i:h", long_options, &option_index);
-		if(c == EOF) break;
+		if(c == -1) break;
 		switch(c) {
 			case 0:
 				if(option_index == 2) {
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
 		if(language) {
 			QStringList languages = QString(language).split(':');
 			foreach(const QString &l, languages) {
-				if(load_messages_translation(l)) break;
+				if(l == QString("en_US") || load_messages_translation(l)) break;
 			}
 		} else {
 			language = getenv("LANG");
