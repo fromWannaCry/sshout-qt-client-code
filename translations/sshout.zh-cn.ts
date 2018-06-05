@@ -80,7 +80,7 @@
         <translation>编辑(&amp;E)</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+9"/>
         <source>&amp;View</source>
         <translation>视图(&amp;V)</translation>
     </message>
@@ -90,7 +90,7 @@
         <translation>帮助(&amp;H)</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+26"/>
         <source>On-line Users</source>
         <translation>当前在线用户</translation>
     </message>
@@ -135,11 +135,26 @@
         <translation>从服务器登出并退出</translation>
     </message>
     <message>
+        <location line="+52"/>
+        <source>&amp;Paste</source>
+        <translation>粘贴(&amp;P)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Ctrl+V</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>About &amp;Qt...</source>
+        <translation>关于 &amp;Qt...</translation>
+    </message>
+    <message>
         <source>&amp;Send</source>
         <translation type="obsolete">发送消息(&amp;S)</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="-52"/>
         <source>Send your message</source>
         <translation>发送您的消息</translation>
     </message>
@@ -174,7 +189,7 @@
         <translation>关于(&amp;A)...</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="+95"/>
+        <location filename="../mainwindow.cpp" line="+93"/>
         <source>Configuration Error</source>
         <translation>配置错误</translation>
     </message>
@@ -199,7 +214,7 @@
         <translation>无法打开消息日志数据库，过往消息将不会被记录</translation>
     </message>
     <message>
-        <location line="+58"/>
+        <location line="+59"/>
         <source>Press %1 to send</source>
         <translation>按下 %1 发送消息</translation>
     </message>
@@ -238,7 +253,7 @@
         <translation>%1 私聊给 %2 %3</translation>
     </message>
     <message>
-        <location line="+48"/>
+        <location line="+52"/>
         <source>Cannot send message, server is not connected</source>
         <translation>无法发送消息，没有连接到服务器</translation>
     </message>
@@ -294,7 +309,7 @@
         <translation>错误: 协议版本不匹配 (服务器版本为 %1)</translation>
     </message>
     <message>
-        <location line="+167"/>
+        <location line="+180"/>
         <source>Choose an image to upload</source>
         <translation>选择上传的图片</translation>
     </message>
@@ -305,7 +320,7 @@
         <translation>无法将 &apos;%1&apos; 作为图片载入</translation>
     </message>
     <message>
-        <location line="-494"/>
+        <location line="-507"/>
         <source>Preview</source>
         <translation>图片预览</translation>
     </message>
@@ -315,7 +330,7 @@
         <translation>无法将图片转换为JPEG格式</translation>
     </message>
     <message>
-        <location line="+344"/>
+        <location line="+357"/>
         <source>About</source>
         <translation>关于</translation>
     </message>
@@ -380,7 +395,7 @@
         <translation>发送</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="-586"/>
+        <location filename="../mainwindow.cpp" line="-603"/>
         <source>Image file &apos;%1&apos; is already exist, skipping write</source>
         <translation>文件 %1 已经存在，文件写入已跳过</translation>
     </message>
@@ -390,7 +405,7 @@
         <translation>[图片缓存失败: %1]</translation>
     </message>
     <message>
-        <location line="+601"/>
+        <location line="+618"/>
         <source>Dropping to send image</source>
         <translation>拖拽至此以发送图片</translation>
     </message>
@@ -413,7 +428,7 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../main.cpp" line="+134"/>
+        <location filename="../main.cpp" line="+135"/>
         <source>Default</source>
         <translation type="unfinished"></translation>
     </message>
