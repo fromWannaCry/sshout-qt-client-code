@@ -325,7 +325,8 @@ void MainWindow::print_message(const QDateTime &dt, const QString &msg_from, con
 		QString("%1 %2").arg(msg_from).arg(t.toString("H:mm:ss")) :
 		tr("%1 to %2 %3").arg(msg_from).arg(msg_to).arg(t.toString("H:mm:ss"));
 	QScrollBar *chat_area_scroll_bar = ui->chat_area->verticalScrollBar();
-	bool should_scroll = chat_area_scroll_bar->value() >= chat_area_scroll_bar->maximum();
+	int current_scroll = chat_area_scroll_bar->value();
+	bool should_scroll = current_scroll >= chat_area_scroll_bar->maximum();
 	QTextCursor cursor = ui->chat_area->textCursor();
 	cursor.movePosition(QTextCursor::End);
 	ui->chat_area->setTextCursor(cursor);
@@ -350,7 +351,7 @@ void MainWindow::print_message(const QDateTime &dt, const QString &msg_from, con
 #else
 	cursor.insertBlock(QTextBlockFormat(), QTextCharFormat());
 #endif
-	if(should_scroll) chat_area_scroll_bar->setValue(chat_area_scroll_bar->maximum());
+	chat_area_scroll_bar->setValue(should_scroll ? chat_area_scroll_bar->maximum() : current_scroll);
 	ui->chat_area->horizontalScrollBar()->setValue(0);
 	if(!my_user_name.isEmpty() && msg_from != my_user_name && (!isActiveWindow() || !should_scroll)) {
 		unread_message_count++;
