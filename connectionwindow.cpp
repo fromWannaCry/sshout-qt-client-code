@@ -160,6 +160,7 @@ void ConnectionWindow::start_main_window() {
 	hide();
 	MainWindow *w = new MainWindow(NULL, config, host, port, identify_file);
 	w->setAttribute(Qt::WA_DeleteOnClose);
+	w->connect_ssh();
 	w->show();
 	accept();
 }

@@ -84,6 +84,7 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	ssh_client->set_identify_file(identify_file);
 	this->host = host;
 	this->port = port;
+	ssh_user = DEFAULT_SSH_USER_NAME;
 	connect(ssh_client, SIGNAL(state_changed(SSHClient::SSHState)), SLOT(ssh_state_change(SSHClient::SSHState)));
 	connect(ssh_client, SIGNAL(readyRead()), SLOT(read_ssh()));
 	if(use_internal_ssh_library || config->value("UseSeparateKnownHosts", false).toBool()) {
@@ -156,7 +157,6 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	setAcceptDrops(true);
 	update_window_title();
 	apply_chat_area_config();
-	connect_ssh();
 }
 
 MainWindow::~MainWindow()
@@ -170,6 +170,10 @@ MainWindow::~MainWindow()
 void MainWindow::show() {
 	if(!ready) return;
 	return QWidget::show();
+}
+
+void MainWindow::set_ssh_user(const QString &user) {
+	ssh_user = user;
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *e) {
@@ -249,7 +253,7 @@ void MainWindow::closeEvent(QCloseEvent *e) {
 }
 
 void MainWindow::connect_ssh() {
-	if(!ssh_client->connect(host, port, DEFAULT_SSH_USER_NAME, "api")) {
+	if(!ssh_client->connect(host, port, ssh_user, "api")) {
 		ui->statusbar->showMessage(tr("Cannot connect"), 10000);
 	}
 }

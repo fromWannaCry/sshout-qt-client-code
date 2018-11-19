@@ -38,7 +38,7 @@
 static QTranslator *translator;
 
 static void print_usage(const char *name) {
-	fprintf(stderr, "Usage: %s [<options>] [<host>|ssh://<host>[:<port>][/]]\n"
+	fprintf(stderr, "Usage: %s [<options>] [<host>|ssh://[<user>@]<host>[:<port>][/]]\n"
 		"Options:\n"
 		"	--port <n>, -p <n>	Specify port for host as <n>, default 22\n"
 		"	--identify-file <path>, -i <path>\n"
@@ -160,15 +160,19 @@ int main(int argc, char *argv[]) {
 	qsrand(time(NULL));
 	if(argc - optind == 1) {
 		QString host;
+		QString user;
 		char *maybe_url = argv[optind];
 		QUrl url(maybe_url);
 		if(url.scheme() == QString("ssh")) {
 			host = url.host();
 			if(port == -1) port = url.port();
+			user = url.userName();
 		} else host = QString(maybe_url);
 		if(port == -1) port = 22;
 		MainWindow w(NULL, &config, host, port, QString(identify_file));
+		if(!user.isEmpty()) w.set_ssh_user(user);
 		w.show();
+		w.connect_ssh();
 		return a.exec();
 	}
 	QList<QVariant> server_list = config.value("ServerList").toList();
@@ -179,7 +183,9 @@ int main(int argc, char *argv[]) {
 		int index = config.value("LastServerIndex", 0).toUInt();
 		if(index < 0 || index >= server_list.count()) index = 0;
 		const ServerInformation &info = server_list[index].value<ServerInformation>();
-		w = new MainWindow(NULL, &config, info.host, info.port, info.identify_file);
+		MainWindow *mw = new MainWindow(NULL, &config, info.host, info.port, info.identify_file);
+		mw->connect_ssh();
+		w = mw;
 	} else {
 		w = new ConnectionWindow(NULL, &config);
 	}

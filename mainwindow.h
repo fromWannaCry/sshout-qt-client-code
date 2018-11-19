@@ -40,8 +40,10 @@ class MainWindow : public QMainWindow {
 public:
 	explicit MainWindow(QWidget *, QSettings *, const QString &, quint16, const QString &);
 	~MainWindow();
+	void set_ssh_user(const QString &);
 
 public slots:
+	void connect_ssh();
 	void show();
 
 protected:
@@ -101,9 +103,9 @@ private:
 	QString my_user_name;
 	bool ready;
 	MessageLog *message_log;
+	QString ssh_user;
 
 private slots:
-	void connect_ssh();
 	//void on_ssh_state_change(SSHClient::SSHState);
 	void ssh_state_change(SSHClient::SSHState);
 	//void on_ssh_ready_read();
