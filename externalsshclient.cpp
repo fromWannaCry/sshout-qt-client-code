@@ -50,6 +50,10 @@ bool ExternalSSHClient::connect(const QString &host, quint16 port, const QString
 		qWarning("ExternalSSHClient::connect: current state is not disconnected");
 		return false;
 	}
+	if(host[0] == '-') {
+		qWarning("ExternalSSHClient::connect: invalid host name");
+		return false;
+	}
 	ssh_process->setEnvironment(environment.toList());
 	ssh_args.clear();
 	//ssh_args << "-o" << "BatchMode=yes";
@@ -74,7 +78,7 @@ bool ExternalSSHClient::connect(const QString &host, quint16 port, const QString
 	if(!identify_file.isEmpty()) ssh_args << "-i" << identify_file;
 	ssh_args << "-T";
 	if(!ssh_args_extra.isEmpty()) ssh_args << ssh_args_extra;
-	if(!command.isEmpty()) ssh_args << command;
+	if(!command.isEmpty()) ssh_args << "--" << command;
 	ssh_process->start(ssh_program_path, ssh_args, QIODevice::ReadWrite);
 	//QIODevice::open(QIODevice::ReadWrite | QIODevice::Unbuffered);
 	QIODevice::open(QIODevice::ReadWrite);
