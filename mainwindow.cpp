@@ -84,6 +84,8 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	ssh_client->set_identify_file(identify_file);
 	this->host = host;
 	this->port = port;
+	int at_i = host.indexOf('@');
+	if(at_i != -1) this->host.remove(0, at_i + 1);
 	ssh_user = DEFAULT_SSH_USER_NAME;
 	connect(ssh_client, SIGNAL(state_changed(SSHClient::SSHState)), SLOT(ssh_state_change(SSHClient::SSHState)));
 	connect(ssh_client, SIGNAL(readyRead()), SLOT(read_ssh()));
@@ -138,7 +140,7 @@ MainWindow::MainWindow(QWidget *parent, QSettings *config, const QString &host, 
 	timer = new QTimer(this);
 	timer->setInterval(60000);
 	connect(timer, SIGNAL(timeout()), SLOT(send_request_online_users()));
-	log_dir = new QDir(QString("%1/logs/%2").arg(config_dir()).arg(host));
+	log_dir = new QDir(QString("%1/logs/%2").arg(config_dir()).arg(this->host));
 	if(!log_dir->mkpath("images")) {
 		qWarning("Cannot create image cache directory");
 		QMessageBox::warning(this, QString(), tr("Failed to create image cache directory '%1'").arg(log_dir->path()));
