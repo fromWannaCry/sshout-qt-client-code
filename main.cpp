@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
 		QString host;
 		QString user;
 		char *maybe_url = argv[optind];
-		QUrl url(maybe_url);
+		QUrl url(QString::fromUtf8(maybe_url));
 		if(url.scheme() == QString("ssh")) {
 			host = url.host();
 			if(port == -1) port = url.port();
